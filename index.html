@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    />
+    <title>Sherpa 语音唤醒测试</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+      .container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      #record-btn {
+        display: block;
+        width: 200px;
+        height: 60px;
+        margin: 20px auto;
+        font-size: 18px;
+        border: none;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      #record-btn.stopped {
+        background: #4CAF50;
+        color: white;
+      }
+      #record-btn.recording {
+        background: #f44336;
+        color: white;
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+      #status {
+        text-align: center;
+        color: #666;
+        margin: 10px 0;
+      }
+      #results {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f9f9f9;
+        border-radius: 4px;
+        min-height: 200px;
+      }
+      #results h3 {
+        margin-top: 0;
+        color: #555;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+      }
+      .keyword-item {
+        padding: 8px 12px;
+        margin: 5px 0;
+        background: #e3f2fd;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .keyword-name {
+        font-weight: bold;
+        color: #1976d2;
+      }
+      .keyword-count {
+        background: #1976d2;
+        color: white;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 14px;
+      }
+      .log-item {
+        padding: 5px 0;
+        color: #666;
+        font-size: 14px;
+        border-bottom: 1px dashed #eee;
+      }
+      .keywords-link {
+        display: inline-block;
+        margin-bottom: 15px;
+        color: #1976d2;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .keywords-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Sherpa 语音唤醒测试</h1>
+    <div class="container">
+      <a href="keywords.html" class="keywords-link">关键词管理 →</a>
+      <button id="record-btn" class="stopped">开始录音</button>
+      <div id="status">点击按钮开始录音</div>
+      <div id="results">
+        <h3>唤醒记录</h3>
+        <div id="log-container"></div>
+      </div>
+    </div>
+    <script src="./renderer.js"></script>
+  </body>
+</html>

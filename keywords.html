@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    />
+    <title>关键词管理</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #1976d2;
+        text-decoration: none;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      .container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .description {
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        color: #555;
+      }
+      .description h3 {
+        margin-top: 0;
+        color: #1976d2;
+      }
+      .description code {
+        background: #fff;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+      }
+      .description ul {
+        margin: 10px 0;
+        padding-left: 20px;
+      }
+      .description li {
+        margin: 5px 0;
+      }
+      .keyword-input-area {
+        margin-bottom: 20px;
+      }
+      #keyword-input {
+        width: 100%;
+        height: 200px;
+        padding: 15px;
+        font-size: 16px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        resize: vertical;
+        font-family: monospace;
+        line-height: 1.6;
+      }
+      #keyword-input:focus {
+        border-color: #1976d2;
+        outline: none;
+      }
+      .btn-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+      }
+      .btn {
+        padding: 12px 24px;
+        font-size: 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .btn-primary {
+        background: #1976d2;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #1565c0;
+      }
+      .btn-success {
+        background: #4caf50;
+        color: white;
+      }
+      .btn-success:hover {
+        background: #45a049;
+      }
+      .preview-section {
+        margin-top: 30px;
+      }
+      .preview-section h3 {
+        color: #555;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 10px;
+      }
+      .preview-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+      .preview-table th,
+      .preview-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      .preview-table th {
+        background: #f5f5f5;
+        font-weight: 600;
+        color: #333;
+      }
+      .preview-table tr:hover {
+        background: #f9f9f9;
+      }
+      .preview-table td:first-child {
+        font-weight: 500;
+        color: #1976d2;
+      }
+      .preview-table td:last-child {
+        font-family: monospace;
+        font-size: 14px;
+        color: #666;
+        word-break: break-all;
+      }
+      .status-bar {
+        margin-top: 15px;
+        padding: 10px 15px;
+        border-radius: 4px;
+        display: none;
+      }
+      .status-bar.success {
+        display: block;
+        background: #d4edda;
+        color: #155724;
+      }
+      .status-bar.error {
+        display: block;
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .keyword-count {
+        color: #666;
+        font-size: 14px;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="index.html" class="back-link">← 返回唤醒测试</a>
+    <h1>关键词管理</h1>
+    <div class="container">
+      <div class="description">
+        <h3>使用说明</h3>
+        <p>每行输入一个关键词，支持以下格式：</p>
+        <ul>
+          <li><strong>中文</strong>：如 <code>小爱同学</code>、<code>小艺小艺</code></li>
+          <li><strong>英文</strong>：如 <code>Hi_Siri</code>、<code>Hey_Google</code>（下划线会被替换为空格）</li>
+          <li><strong>混合</strong>：如 <code>Hello_小智</code></li>
+        </ul>
+        <p>系统会自动将关键词转换为音素格式供语音识别使用。</p>
+      </div>
+
+      <div class="keyword-input-area">
+        <label for="keyword-input">关键词列表：</label>
+        <textarea id="keyword-input" placeholder="例如：
+Hi_Siri
+小爱同学
+Hey_Google"></textarea>
+        <div class="keyword-count" id="keyword-count">共 0 个关键词</div>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="preview-btn">预览转换</button>
+          <button class="btn btn-success" id="save-btn">保存并生成</button>
+        </div>
+        <div class="status-bar" id="status-bar"></div>
+      </div>
+
+      <div class="preview-section" id="preview-section" style="display: none;">
+        <h3>转换预览</h3>
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th>原始关键词</th>
+              <th>转换后的音素表示</th>
+            </tr>
+          </thead>
+          <tbody id="preview-tbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script src="./renderer-keywords.js"></script>
+  </body>
+</html>

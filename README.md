@@ -197,12 +197,6 @@ sherpa_electron_test/
 
 ## 使用说明
 
-### 环境要求
-- **操作系统**：Windows 10/11 (x64) 
-- **Node.js版本**：v18+ 或 v20+
-- **内存**：至少4GB RAM
-- **CPU**：支持AVX2指令集的处理器
-
 ### 安装步骤
 ```bash
 # 1. 克隆或下载项目
@@ -225,31 +219,6 @@ npm start
 - **混合**：支持中英文混合（如："Hi小明"）
 - **多词**：支持多个词语组合（如："打开音乐"）
 
-## 性能指标
-
-### 资源占用（典型值）
-- **CPU使用率**：10-15% (Intel i5-8250U)
-- **内存占用**：150-200MB
-- **启动时间**：3-5秒
-- **关键词检测延迟**：100-300ms
-
-### 准确率
-- **英文关键词**：>95%（在安静环境下）
-- **中文关键词**：>90%（在安静环境下）
-- **抗噪能力**：中等（适合家庭/办公室环境）
-
-## 扩展可能性
-
-### 功能扩展
-1. **多语言支持**：添加更多语言的音素词典
-3. **命令执行**：检测到关键词后执行相应操作（如打开应用、发送消息）
-4. **云同步**：将关键词配置同步到云端
-
-### 性能优化
-1. **GPU加速**：启用ONNX Runtime的GPU支持
-2. **模型压缩**：使用量化后的模型减少内存占用
-3. **音频预处理**：添加降噪和回声消除
-
 ## 参考资料
 
 ### Sherpa ONNX 官方资源
@@ -257,16 +226,8 @@ npm start
 - **官方文档**：https://k2-fsa.github.io/sherpa/onnx/
 - **关键词唤醒文档**：https://k2-fsa.github.io/sherpa/onnx/kws/index.html
 - **预训练模型**：https://github.com/k2-fsa/sherpa-onnx/releases/tag/kws-models
-- **Discord社区**：https://discord.gg/fJdxzg2VbG
 
 ### Electron 官方资源
 - **官方网站**：https://www.electronjs.org/
 - **官方文档**：https://www.electronjs.org/docs
 - **安全最佳实践**：https://www.electronjs.org/docs/latest/tutorial/security
-
-### 相关项目参考
-- **lol-wom-electron**：另一个使用Sherpa ONNX + Electron的项目（官方文档中提到）
-- **BreezeApp**：MediaTek Research开发的移动AI应用，使用Sherpa ONNX
-
----
-

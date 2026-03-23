@@ -10,7 +10,9 @@
   "author": "Jane Doe",
   "license": "MIT",
   "dependencies": {
+    "form-data": "^4.0.5",
     "naudiodon2": "^2.5.0",
+    "node-fetch": "^2.7.0",
     "pinyin": "^4.0.0",
     "sherpa-onnx-node": "^1.12.29",
     "sherpa-onnx-win-x64": "^1.12.28"

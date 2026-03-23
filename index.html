@@ -101,8 +101,55 @@
         text-decoration: none;
         font-size: 14px;
       }
-      .keywords-link:hover {
-        text-decoration: underline;
+      .asr-box {
+        margin-top: 20px;
+        padding: 15px;
+        background: #e8f5e9;
+        border-radius: 8px;
+        border-left: 4px solid #4caf50;
+        display: none;
+      }
+      .asr-box.active {
+        display: block;
+      }
+      .asr-box.processing {
+        background: #fff3e0;
+        border-left-color: #ff9800;
+      }
+      .asr-box h4 {
+        margin: 0 0 10px 0;
+        color: #333;
+      }
+      .asr-text {
+        font-size: 16px;
+        color: #555;
+        min-height: 24px;
+      }
+      .asr-history {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f3e5f5;
+        border-radius: 8px;
+        border-left: 4px solid #9c27b0;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .asr-history h4 {
+        margin: 0 0 10px 0;
+        color: #333;
+      }
+      .history-item {
+        padding: 8px 12px;
+        margin: 5px 0;
+        background: white;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #555;
+      }
+      .history-time {
+        font-size: 12px;
+        color: #999;
+        margin-right: 8px;
       }
     </style>
   </head>
@@ -112,6 +159,15 @@
       <a href="keywords.html" class="keywords-link">关键词管理 →</a>
       <button id="record-btn" class="stopped">开始录音</button>
       <div id="status">点击按钮开始录音</div>
+      <div id="asr-box" class="asr-box">
+        <h4>语音识别</h4>
+        <div id="asr-text" class="asr-text">等待说话...</div>
+        <div id="asr-status" class="asr-status"></div>
+      </div>
+      <div id="asr-history" class="asr-history">
+        <h4>识别历史</h4>
+        <div id="history-container"></div>
+      </div>
       <div id="results">
         <h3>唤醒记录</h3>
         <div id="log-container"></div>

@@ -11,12 +11,12 @@ const PATHS = {
 // VAD 配置参数
 const VAD_CONFIG = {
   MIN_SPEECH_DURATION: 0.25,    // 最小语音持续时间 250ms
-  MIN_SILENCE_DURATION: 2,    // 静音超过 1s 认为语音结束
-  MAX_SPEECH_DURATION: 5,      // 最大语音持续时间 25 秒
+  MIN_SILENCE_DURATION: 2,    // 静音超过 2s 认为语音结束
+  MAX_SPEECH_DURATION: 25,      // 最大语音持续时间 25 秒
   WINDOW_SIZE: 512,             // VAD 窗口大小
   SAMPLE_RATE: 16000,
   BUFFER_SIZE_SECONDS: 60,      // 缓冲区大小（秒）
-  SILENCE_TIMEOUT: 10000,        // 静音超时时间，超时无新语音则退出 ASR
+  SILENCE_TIMEOUT: 10000,        // 静音超时时间，超时无新语音则退出 ASR，退回到 kws 模式
 }
 
 // KWS 配置

@@ -11,7 +11,6 @@ app.whenReady().then(() => {
   // 注册 IPC 处理器
   registerIPCHandlers(mainWindow)
 
-  // macOS: 点击 dock 图标时重新创建窗口
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       windowManager.createWindow()

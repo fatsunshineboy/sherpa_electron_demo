@@ -1,5 +1,5 @@
 // IPC 处理器
-const { ipcMain, BrowserWindow } = require('electron/main')
+const { ipcMain } = require('electron/main')
 const { PATHS } = require('../config/constants')
 const { state } = require('../utils/state-manager')
 const kwsService = require('../services/kws-service')

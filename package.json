@@ -15,7 +15,8 @@
     "node-fetch": "^2.7.0",
     "pinyin": "^4.0.0",
     "sherpa-onnx-node": "^1.12.29",
-    "sherpa-onnx-win-x64": "^1.12.28"
+    "sherpa-onnx-win-x64": "^1.12.28",
+    "speaker": "^0.5.5"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.3",

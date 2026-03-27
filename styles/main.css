@@ -91,6 +91,14 @@ body {
   padding: 40px 28px;
 }
 
+/* 控制区包装器 - 按钮和状态行并排 */
+.control-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+}
+
 .record-btn {
   width: 160px;
   height: 160px;
@@ -165,6 +173,67 @@ body {
   background: var(--success);
   border-radius: 50%;
   animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* 状态行容器 */
+.status-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+/* 单行状态 */
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #94a3b8;
+  transition: all 0.3s ease;
+}
+
+.status-line .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  transition: all 0.3s ease;
+}
+
+/* 激活状态 - 等待唤醒（绿色） */
+.status-line.kws-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-line.kws-active .status-dot {
+  background: #22c55e;
+  animation: pulse-slow 1.5s infinite;
+}
+
+/* 激活状态 - 识别中（蓝色） */
+.status-line.asr-active {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-line.asr-active .status-dot {
+  background: #3b82f6;
+  animation: pulse-fast 0.8s infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes pulse-fast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
 @keyframes status-pulse {
@@ -278,8 +347,7 @@ body {
 
 /* 历史记录区 */
 .history-section {
-  max-height: 350px;
-  overflow-y: auto;
+  /* 移除滚动条限制，让内容自然展开 */
 }
 
 .history-empty {
@@ -287,37 +355,6 @@ body {
   padding: 40px;
   color: var(--text-secondary);
   font-size: 0.9375rem;
-}
-
-.history-item {
-  padding: 16px;
-  margin-bottom: 12px;
-  background: var(--bg);
-  border-radius: 10px;
-  border-left: 4px solid var(--primary);
-  transition: all 0.2s;
-}
-
-.history-item:hover {
-  transform: translateX(4px);
-  box-shadow: var(--shadow);
-}
-
-.history-item:last-child {
-  margin-bottom: 0;
-}
-
-.history-text {
-  font-size: 1rem;
-  color: var(--text);
-  line-height: 1.5;
-}
-
-.history-time {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
 }
 
 /* 唤醒记录区 */
@@ -423,4 +460,213 @@ body {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* ========== 对话区样式 ========== */
+
+.chat-section {
+  display: none;
+  animation: slideDown 0.3s ease-out;
+}
+
+.chat-section.active {
+  display: block;
+}
+
+.chat-content {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid var(--primary-light);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  min-height: 80px;
+}
+
+.chat-message {
+  margin-bottom: 16px;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s ease-out;
+}
+
+.chat-message.visible {
+  opacity: 1;
+  max-height: 500px;
+}
+
+.chat-message.user {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  padding: 12px 16px;
+  border-radius: 12px 12px 12px 4px;
+  margin-left: 0;
+  margin-right: 40px;
+}
+
+.chat-message.user::before {
+  content: '👤 ';
+}
+
+.chat-message.ai {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  padding: 12px 16px;
+  border-radius: 12px 12px 4px 12px;
+  margin-left: 40px;
+  margin-right: 0;
+  line-height: 1.6;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  position: relative;
+}
+
+.chat-message.ai::before {
+  content: '🤖';
+  position: absolute;
+  top: -4px;
+  left: -28px;
+  font-size: 1rem;
+}
+
+.chat-message.ai #chat-ai-text {
+  flex: 1;
+}
+
+/* 播放按钮 */
+.play-btn {
+  background: var(--primary);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.play-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.play-btn:hover {
+  background: var(--primary-dark);
+  transform: scale(1.1);
+}
+
+.play-btn:active {
+  transform: scale(0.95);
+}
+
+.chat-status {
+  text-align: center;
+  padding: 12px;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s ease-out;
+}
+
+.chat-status.visible {
+  opacity: 1;
+  max-height: 50px;
+}
+
+.chat-status.error {
+  color: var(--error);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+/* 打字动画 */
+@keyframes typing {
+  0%, 60%, 100% { opacity: 0.3; }
+  30% { opacity: 1; }
+}
+
+.chat-status.visible::after {
+  content: '...';
+  animation: typing 1.5s ease-in-out infinite;
+}
+
+/* 历史记录对话气泡样式 */
+.history-item {
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--bg);
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.history-item:hover {
+  box-shadow: var(--shadow);
+}
+
+.history-item:last-child {
+  margin-bottom: 0;
+}
+
+.history-time {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.history-bubbles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-bubble {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  position: relative;
+}
+
+.chat-bubble.user {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  align-self: flex-end;
+  border-radius: 12px 12px 4px 12px;
+  margin-left: auto;
+  margin-right: 32px;  /* 给图标留出空间 */
+}
+
+.chat-bubble.user::before {
+  content: '👤';
+  position: absolute;
+  top: 4px;
+  right: -26px;
+  font-size: 1rem;
+}
+
+.chat-bubble.ai {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  align-self: flex-start;
+  border-radius: 12px 12px 12px 4px;
+  margin-right: auto;
+  margin-left: 32px;  /* 给图标留出空间 */
+}
+
+.chat-bubble.ai::before {
+  content: '🤖';
+  position: absolute;
+  top: 4px;
+  left: -26px;
+  font-size: 1rem;
 }

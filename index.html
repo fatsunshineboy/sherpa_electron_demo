@@ -32,7 +32,20 @@
 
       <!-- 录音控制卡片 -->
       <div class="card control-section">
-        <button id="record-btn" class="record-btn stopped">开始录音</button>
+        <div class="control-wrapper">
+          <button id="record-btn" class="record-btn stopped">开始录音</button>
+          <!-- 状态显示 -->
+          <div class="status-lines">
+            <div id="status-kws" class="status-line">
+              <span class="status-dot"></span>
+              <span class="status-text">等待语音唤醒</span>
+            </div>
+            <div id="status-asr" class="status-line">
+              <span class="status-dot"></span>
+              <span class="status-text">语音识别中</span>
+            </div>
+          </div>
+        </div>
         <div id="status" class="status-bar">点击按钮开始录音</div>
       </div>
 
@@ -42,6 +55,19 @@
         <div class="asr-content">
           <div id="asr-text" class="asr-text">等待说话...</div>
           <div id="asr-status" class="asr-status"></div>
+        </div>
+      </div>
+
+      <!-- AI 对话区 -->
+      <div id="chat-box" class="card chat-section">
+        <h2 class="card-title">AI 回复</h2>
+        <div class="chat-content">
+          <div id="chat-user" class="chat-message user"></div>
+          <div class="chat-message ai">
+            <div id="chat-ai-text"></div>
+            <button id="chat-ai-play" class="play-btn" title="播放">🔊</button>
+          </div>
+          <div id="chat-status" class="chat-status"></div>
         </div>
       </div>
 

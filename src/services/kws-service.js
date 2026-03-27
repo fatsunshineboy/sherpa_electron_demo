@@ -96,6 +96,12 @@ function startRecording(mainWindow) {
   })
 
   ai.start()
+
+  // 发送状态更新：KWS 模式
+  mainWindow.webContents.send('state-changed', {
+    isRecording: true,
+    asrMode: false,
+  })
 }
 
 // 停止录音
@@ -132,6 +138,14 @@ function stopRecording(mainWindow) {
 
   // 重置状态
   resetAllState()
+
+  // 发送状态更新：已停止
+  if (mainWindow) {
+    mainWindow.webContents.send('state-changed', {
+      isRecording: false,
+      asrMode: false,
+    })
+  }
 }
 
 // 仅清理 KWS 实例（用于关键词更新后）

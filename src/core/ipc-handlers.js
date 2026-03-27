@@ -3,6 +3,7 @@ const { ipcMain } = require('electron/main')
 const { PATHS } = require('../config/constants')
 const { state } = require('../utils/state-manager')
 const kwsService = require('../services/kws-service')
+const vadService = require('../services/vad-service')
 const windowManager = require('./window-manager')
 const {
   generateKeywords,
@@ -22,6 +23,11 @@ function registerIPCHandlers(mainWindow) {
   // 处理停止录音请求
   ipcMain.on('stop-recording', () => {
     kwsService.stopRecording(mainWindow)
+  })
+
+  // 处理 TTS 播放请求（播放按钮）
+  ipcMain.on('play-tts', async (event, text) => {
+    await vadService.playTTS(mainWindow, text)
   })
 
   // ========== 关键词管理 IPC 处理 ==========
@@ -70,7 +76,7 @@ function registerIPCHandlers(mainWindow) {
 
       // 如果正在录音，停止并清理资源
       if (state.isRecording) {
-        kwsService.stopRecording()
+        kwsService.stopRecording(mainWindow)
       }
 
       // 清理 KWS 实例，强制下次录音时重新创建

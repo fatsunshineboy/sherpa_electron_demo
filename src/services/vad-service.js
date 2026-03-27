@@ -2,6 +2,9 @@
 const sherpa_onnx = require('sherpa-onnx-node')
 const { VAD_CONFIG, PATHS } = require('../config/constants')
 const { state, resetVadState } = require('../utils/state-manager')
+const chatService = require('./chat-service')
+const ttsService = require('./tts-service')
+const audioPlayer = require('../audio/audio-player')
 
 // 创建 VAD 实例
 function createVad() {
@@ -35,6 +38,10 @@ function startASR(mainWindow) {
   state.asrResult = ''
   state.segmentId = 0
 
+  // 清空 ASR 识别结果
+  const asrService = require('./asr-service')
+  asrService.clearASRResult()
+
   // 初始化 VAD
   const vadInstance = createVad()
   state.vad = vadInstance.vad
@@ -44,6 +51,12 @@ function startASR(mainWindow) {
   // 注意：不在此处设置定时器，而是在语音段结束时设置
 
   mainWindow.webContents.send('asr-started', { keyword: state.keywordCounts })
+
+  // 发送状态更新：ASR 模式
+  mainWindow.webContents.send('state-changed', {
+    isRecording: true,
+    asrMode: true,
+  })
 }
 
 // 处理 VAD 音频数据
@@ -105,6 +118,7 @@ function processASRWithVAD(samples, mainWindow, asrService) {
           const { mergeSpeechSegments } = require('../audio/audio-utils')
           const mergedSamples = mergeSpeechSegments(segments)
           if (mergedSamples) {
+            // isForced = true，表示被截断，不触发 Chat
             asrService.processSpeechSegment(mainWindow, mergedSamples, true)
           }
         }
@@ -124,7 +138,7 @@ function processASRWithVAD(samples, mainWindow, asrService) {
       state.isSpeechActive = false
       state.speechStartTime = null
 
-      // 启动 2 秒静音定时器，如果 2 秒内没有新语音则退出 ASR
+      // 启动静音定时器，如果 VAD_CONFIG.SILENCE_TIMEOUT 秒内没有新语音则退出 ASR
       if (state.silenceTimer) {
         clearTimeout(state.silenceTimer)
       }
@@ -136,13 +150,13 @@ function processASRWithVAD(samples, mainWindow, asrService) {
       const duration = segment.samples.length / vad.config.sampleRate
       console.log(`VAD: Speech segment ended, duration: ${duration}s`)
 
-      // 发送这段语音进行识别
+      // isForced = false，表示正常结束，会触发 Chat
       asrService.processSpeechSegment(mainWindow, segment.samples, false)
     }
   }
 }
 
-// 完成 ASR，处理剩余语音段
+// 完成 ASR，退出 ASR 模式，返回 KWS 模式
 async function finishASR(mainWindow, asrService) {
   if (!state.asrMode) return
 
@@ -166,6 +180,7 @@ async function finishASR(mainWindow, asrService) {
       const { mergeSpeechSegments } = require('../audio/audio-utils')
       const mergedSamples = mergeSpeechSegments(segments)
       if (mergedSamples) {
+        // 剩余语音段，isForced = true（属于清理，不触发 Chat）
         await asrService.processSpeechSegment(mainWindow, mergedSamples, true)
       }
     }
@@ -179,16 +194,125 @@ async function finishASR(mainWindow, asrService) {
   state.isSpeechActive = false
   state.speechStartTime = null
 
-  // 重置 KWS stream，清除 ASR 期间积累的音频数据
-  if (state.kws) {
-    if (state.stream) {
-      try { state.stream.free() } catch(e) {}
-    }
-    state.stream = state.kws.createStream()
-    console.log('KWS stream reset after ASR')
-  }
+  // 重新创建 KWS 实例（模拟停止再开始的逻辑）
+  // if (state.kws) {
+  //   // 释放旧的 KWS 实例和 stream
+  //   if (state.stream) {
+  //     try { state.stream.free() } catch(e) {}
+  //   }
+  //   try { state.kws.free() } catch(e) {}
 
+  //   // 重新创建 KWS 实例
+  //   const kwsService = require('./kws-service')
+  //   const newKws = kwsService.createKeywordSpotter()
+  //   state.kws = newKws
+  //   state.stream = newKws.createStream()
+  //   console.log('KWS instance recreated after ASR')
+  // }
+
+  
+  // 清空识别结果
+  state.asrResult = ''
+  asrService.clearASRResult()
+
+  // 发送 ASR 完成事件（退出 ASR 模式）
   mainWindow.webContents.send('asr-done')
+
+  // 发送状态更新：返回 KWS 模式
+  mainWindow.webContents.send('state-changed', {
+    isRecording: true,
+    asrMode: false,
+  })
+
+  console.log('ASR mode exited, returning to KWS mode')
+}
+
+// 处理对话流程（由 asr-service 调用，异步执行，不阻塞 ASR）
+function handleConversation(mainWindow, userText) {
+  // 异步执行，不阻塞 ASR 继续监听
+  processConversation(mainWindow, userText).catch(error => {
+    console.error('Conversation error:', error)
+    mainWindow.webContents.send('chat-error', { error: error.message })
+  })
+}
+
+// 处理对话流程：Chat -> TTS -> 播放（异步执行，ASR 模式继续）
+async function processConversation(mainWindow, userText) {
+  try {
+    state.isChatProcessing = true
+    state.lastUserMessage = userText
+
+    // 1. 发送对话开始事件
+    mainWindow.webContents.send('chat-started', { userText })
+
+    // 2. 调用大模型
+    console.log('Calling Chat API with:', userText)
+    const aiReply = await chatService.chatWithLLM(userText, state.conversationHistory)
+    state.lastAIReply = aiReply
+
+    // 更新对话历史
+    state.conversationHistory = chatService.updateConversationHistory(
+      state.conversationHistory,
+      userText,
+      aiReply
+    )
+
+    // 3. 发送模型回复事件
+    mainWindow.webContents.send('chat-result', {
+      userText,
+      reply: aiReply
+    })
+
+    // 4. 调用 TTS
+    mainWindow.webContents.send('tts-started')
+    console.log('Calling TTS API for:', aiReply.substring(0, 50) + '...')
+
+    const audioBuffer = await ttsService.synthesize(aiReply)
+
+    // 5. 播放音频
+    state.isTTSPlaying = true
+    mainWindow.webContents.send('tts-playing')
+
+    await audioPlayer.play(audioBuffer)
+
+    state.isTTSPlaying = false
+    mainWindow.webContents.send('tts-done')
+
+    console.log('Conversation flow completed')
+
+  } catch (error) {
+    console.error('Conversation error:', error)
+    mainWindow.webContents.send('chat-error', { error: error.message })
+  } finally {
+    state.isChatProcessing = false
+
+    // 检查是否有排队等待的用户输入
+    if (state.pendingUserText) {
+      const pendingText = state.pendingUserText
+      state.pendingUserText = null
+      console.log('Processing queued speech segment:', pendingText)
+      // 延迟一小段时间再处理，让前端有时间更新状态
+      setTimeout(() => {
+        handleConversation(mainWindow, pendingText)
+      }, 300)
+    }
+  }
+  // 注意：不发送 asr-done，ASR 模式继续，直到 SILENCE_TIMEOUT 触发 finishASR
+}
+
+// 播放指定文本的 TTS（用于播放按钮）
+async function playTTS(mainWindow, text) {
+  try {
+    mainWindow.webContents.send('tts-play-started')
+
+    const audioBuffer = await ttsService.synthesize(text)
+    await audioPlayer.play(audioBuffer)
+
+    mainWindow.webContents.send('tts-play-done')
+  } catch (error) {
+    console.error('TTS play error:', error)
+    mainWindow.webContents.send('chat-error', { error: error.message })
+  }
 }
 
 module.exports = {
@@ -196,4 +320,7 @@ module.exports = {
   startASR,
   processASRWithVAD,
   finishASR,
+  handleConversation,
+  processConversation,
+  playTTS,
 }

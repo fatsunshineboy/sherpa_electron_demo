@@ -250,7 +250,7 @@ npm install
 # 设置环境变量
 set ZHIPU_API_KEY=your-api-key-here
 
-# 或者修改 src/config/constants.js 中的 API_CONFIG.KEY
+# 或者修改 src/config/constants.js 中的 ASR_CONFIG.KEY
 ```
 
 3. **启动应用**

@@ -11,7 +11,7 @@ const PATHS = {
 // VAD 配置参数
 const VAD_CONFIG = {
   MIN_SPEECH_DURATION: 0.25,    // 最小语音持续时间 250ms
-  MIN_SILENCE_DURATION: 2,    // 静音超过 2s 认为语音结束
+  MIN_SILENCE_DURATION: 2,    // 静音超过 2s 认为一句话结束
   MAX_SPEECH_DURATION: 25,      // 最大语音持续时间 25 秒
   WINDOW_SIZE: 512,             // VAD 窗口大小
   SAMPLE_RATE: 16000,
@@ -28,16 +28,37 @@ const KWS_CONFIG = {
   DEBUG: 1,
 }
 
-// API 配置
-const API_CONFIG = {
+// ASR API 配置
+const ASR_CONFIG = {
   KEY: process.env.ZHIPU_API_KEY || 'your-api-key',
   URL: 'https://open.bigmodel.cn/api/paas/v4/audio/transcriptions',
   MODEL: 'glm-asr-2512',
+}
+
+// Chat API 配置
+const CHAT_CONFIG = {
+  KEY: process.env.ZHIPU_API_KEY || 'your-api-key',
+  URL: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+  MODEL: 'glm-5',
+  MAX_HISTORY: 5,  // 保留最近5轮对话
+}
+
+// TTS API 配置
+const TTS_CONFIG = {
+  KEY: process.env.ZHIPU_API_KEY || 'your-api-key',
+  URL: 'https://open.bigmodel.cn/api/paas/v4/audio/speech',
+  MODEL: 'glm-tts',
+  VOICE: 'tongtong',       // 默认音色
+  RESPONSE_FORMAT: 'pcm',  // 输出格式，配合 speaker 使用
+  SAMPLE_RATE: 24000,      // 采样率
+  SPEED: 1.0,              // 语速 [0.5, 2.0]
 }
 
 module.exports = {
   PATHS,
   VAD_CONFIG,
   KWS_CONFIG,
-  API_CONFIG,
+  ASR_CONFIG,
+  CHAT_CONFIG,
+  TTS_CONFIG,
 }

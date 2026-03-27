@@ -1,6 +1,3 @@
-// 全局状态管理
-const { VAD_CONFIG } = require('../config/constants')
-
 // 录音状态
 const recordingState = {
   isRecording: false,
@@ -28,6 +25,15 @@ const vadState = {
   isSpeechActive: false,
   speechStartTime: null,
   silenceTimer: null,
+}
+
+// 对话相关状态
+const chatState = {
+  conversationHistory: [],   // 对话历史
+  isChatProcessing: false,   // 是否正在处理对话
+  isTTSPlaying: false,       // 是否正在播放 TTS 音频
+  lastUserMessage: '',       // 最后一条用户消息
+  lastAIReply: '',           // 最后一条 AI 回复
 }
 
 // 状态查询方法
@@ -66,6 +72,18 @@ const state = {
   set speechStartTime(value) { vadState.speechStartTime = value },
   get silenceTimer() { return vadState.silenceTimer },
   set silenceTimer(value) { vadState.silenceTimer = value },
+
+  // 对话状态
+  get conversationHistory() { return chatState.conversationHistory },
+  set conversationHistory(value) { chatState.conversationHistory = value },
+  get isChatProcessing() { return chatState.isChatProcessing },
+  set isChatProcessing(value) { chatState.isChatProcessing = value },
+  get isTTSPlaying() { return chatState.isTTSPlaying },
+  set isTTSPlaying(value) { chatState.isTTSPlaying = value },
+  get lastUserMessage() { return chatState.lastUserMessage },
+  set lastUserMessage(value) { chatState.lastUserMessage = value },
+  get lastAIReply() { return chatState.lastAIReply },
+  set lastAIReply(value) { chatState.lastAIReply = value },
 }
 
 // 重置 KWS 状态
@@ -98,11 +116,27 @@ function resetVadState() {
   vadState.speechStartTime = null
 }
 
+// 重置对话状态
+function resetChatState() {
+  chatState.isChatProcessing = false
+  chatState.isTTSPlaying = false
+  chatState.lastUserMessage = ''
+  chatState.lastAIReply = ''
+  // 注意：不清空 conversationHistory，保留上下文
+}
+
+// 清空对话历史
+function clearConversationHistory() {
+  chatState.conversationHistory = []
+}
+
 // 重置所有状态（停止录音时使用）
 function resetAllState() {
   recordingState.isRecording = false
   asrState.asrMode = false
+  resetKwsState()
   resetVadState()
+  resetChatState()
 }
 
 module.exports = {
@@ -110,5 +144,7 @@ module.exports = {
   resetKwsState,
   resetAsrState,
   resetVadState,
+  resetChatState,
+  clearConversationHistory,
   resetAllState,
 }

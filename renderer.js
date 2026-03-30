@@ -10,6 +10,7 @@ const chatUser = document.getElementById('chat-user')
 const chatAIText = document.getElementById('chat-ai-text')
 const chatAIPlay = document.getElementById('chat-ai-play')
 const chatStatus = document.getElementById('chat-status')
+const silenceTimerEl = document.getElementById('silence-timer')
 // 状态显示元素
 const statusKws = document.getElementById('status-kws')
 const statusAsr = document.getElementById('status-asr')
@@ -17,6 +18,26 @@ const statusAsr = document.getElementById('status-asr')
 let isRecording = false
 let totalDetections = 0
 let keywordsUpdated = false
+
+// 静音计时器显示
+function updateSilenceTimerDisplay(remaining, isPaused) {
+  if (!silenceTimerEl) return
+
+  const seconds = Math.ceil(remaining / 1000)
+  if (isPaused) {
+    silenceTimerEl.textContent = `对话中，计时暂停`
+    silenceTimerEl.classList.remove('active')
+  } else {
+    silenceTimerEl.textContent = `${seconds}秒后进入唤醒模式`
+    silenceTimerEl.classList.add('active')
+  }
+}
+
+function clearSilenceTimerDisplay() {
+  if (!silenceTimerEl) return
+  silenceTimerEl.textContent = ''
+  silenceTimerEl.classList.remove('active')
+}
 
 // 状态更新函数：两行互斥显示
 function updateStatusDisplay(isRecording, asrMode) {
@@ -82,6 +103,8 @@ window.electronAPI.onASRStarted((data) => {
   segmentResults = {}
   asrText.textContent = ''
   asrStatus.textContent = `已唤醒，请说话...`
+  // 清空计时器显示（进入 ASR 模式时由后端发送更新）
+  clearSilenceTimerDisplay()
 })
 
 // 处理 ASR 处理中事件
@@ -121,6 +144,29 @@ window.electronAPI.onASRStream((data) => {
   asrStatus.textContent = data.isFinal ? '识别完成' : '正在实时识别...'
 })
 
+// 处理 ASR 清空事件（对话完成后）
+window.electronAPI.onASRClear && window.electronAPI.onASRClear(() => {
+  asrContent = ''
+  currentSegmentId = null
+  segmentResults = {}
+  asrText.textContent = ''
+})
+
+// 处理静音计时器更新
+window.electronAPI.onSilenceTimerUpdate && window.electronAPI.onSilenceTimerUpdate((data) => {
+  updateSilenceTimerDisplay(data.remaining, false)
+})
+
+// 处理静音计时器暂停
+window.electronAPI.onSilenceTimerPaused && window.electronAPI.onSilenceTimerPaused((data) => {
+  updateSilenceTimerDisplay(data.remaining, true)
+})
+
+// 处理静音计时器清除（用户开始说话时）
+window.electronAPI.onSilenceTimerClear && window.electronAPI.onSilenceTimerClear(() => {
+  clearSilenceTimerDisplay()
+})
+
 // 处理 ASR 状态更新事件
 window.electronAPI.onASRStatus && window.electronAPI.onASRStatus((data) => {
   if (data.status === 'listening') {
@@ -135,6 +181,7 @@ window.electronAPI.onASRStopped && window.electronAPI.onASRStopped(() => {
   asrContent = ''
   currentSegmentId = null
   segmentResults = {}
+  clearSilenceTimerDisplay()
 })
 
 // 处理 ASR 完成事件（退出 ASR 模式）
@@ -144,6 +191,7 @@ window.electronAPI.onASRDone(() => {
   asrContent = ''
   currentSegmentId = null
   segmentResults = {}
+  clearSilenceTimerDisplay()
 })
 
 // 保存识别结果到历史记录

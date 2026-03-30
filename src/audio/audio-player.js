@@ -50,18 +50,6 @@ async function play(audioBuffer) {
 }
 
 /**
- * 播放多个音频 Buffer（队列播放）
- * @param {Buffer[]} audioBuffers - 音频数据数组
- * @returns {Promise<void>}
- */
-async function playQueue(audioBuffers) {
-  for (const buffer of audioBuffers) {
-    if (!isPlaying) break
-    await play(buffer)
-  }
-}
-
-/**
  * 停止播放
  */
 function stop() {
@@ -76,17 +64,7 @@ function stop() {
   isPlaying = false
 }
 
-/**
- * 获取播放状态
- * @returns {boolean}
- */
-function getPlayingStatus() {
-  return isPlaying
-}
-
 module.exports = {
   play,
-  playQueue,
   stop,
-  getPlayingStatus,
 }

@@ -287,6 +287,33 @@ body {
   border-color: var(--warning);
 }
 
+/* ASR 头部 - 显示静音计时器 */
+.asr-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.silence-timer {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  background: var(--bg);
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.silence-timer.active {
+  color: var(--warning);
+  background: #fff7ed;
+}
+
+.silence-timer.active::before {
+  content: '⏱️';
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;

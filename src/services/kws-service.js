@@ -57,6 +57,9 @@ function startRecording(mainWindow) {
   ai.on('data', data => {
     if (!state.isRecording) return
 
+    // 对话期间跳过所有音频输入
+    if (state.skipAudioInput) return
+
     const samples = new Float32Array(data.buffer)
 
     // ASR 模式：使用 VAD 检测语音，不向 KWS stream 送入数据
@@ -65,17 +68,21 @@ function startRecording(mainWindow) {
       return
     }
 
-    // KWS 模式：向 stream 送入数据并检测唤醒词
-    stream.acceptWaveform({
+    // KWS 模式：使用 state.kws 和 state.stream（而非闭包变量）
+    const currentKws = state.kws
+    const currentStream = state.stream
+    if (!currentKws || !currentStream) return
+
+    currentStream.acceptWaveform({
       sampleRate: KWS_CONFIG.SAMPLE_RATE,
       samples: samples,
     })
 
-    while (kwsInstance.isReady(stream)) {
-      kwsInstance.decode(stream)
+    while (currentKws.isReady(currentStream)) {
+      currentKws.decode(currentStream)
     }
 
-    const keyword = kwsInstance.getResult(stream).keyword
+    const keyword = currentKws.getResult(currentStream).keyword
     if (keyword !== '') {
       // 更新计数
       if (!state.keywordCounts[keyword]) {
@@ -160,9 +167,120 @@ function cleanupKWS() {
   }
 }
 
+// 重新开始录音（对话完成后调用）
+function restartRecording(mainWindow) {
+  console.log('Restarting recording...')
+
+  // 保存关键词计数
+  const savedKeywordCounts = { ...state.keywordCounts }
+
+  // 先停止录音（但不发送状态更新到前端）
+  if (state.vad) {
+    try { state.vad.free() } catch(e) {}
+    state.vad = null
+  }
+  state.vadBuffer = null
+  state.isSpeechActive = false
+  state.speechStartTime = null
+  state.asrMode = false
+
+  if (state.stream) {
+    try { state.stream.free() } catch(e) {}
+    state.stream = null
+  }
+  if (state.kws) {
+    try { state.kws.free() } catch(e) {}
+    state.kws = null
+  }
+
+  if (state.ai) {
+    try { state.ai.quit() } catch(e) {}
+    state.ai = null
+  }
+
+  resetAllState()
+
+  // 重新开始录音
+  state.isRecording = true
+  state.keywordCounts = savedKeywordCounts
+
+  const kwsInstance = createKeywordSpotter()
+  const stream = kwsInstance.createStream()
+  state.kws = kwsInstance
+  state.stream = stream
+
+  const ai = new portAudio.AudioIO({
+    inOptions: {
+      channelCount: 1,
+      closeOnError: true,
+      deviceId: -1,
+      sampleFormat: portAudio.SampleFormatFloat32,
+      sampleRate: KWS_CONFIG.SAMPLE_RATE,
+    },
+  })
+  state.ai = ai
+
+  ai.on('data', data => {
+    if (!state.isRecording) return
+    if (state.skipAudioInput) return
+
+    const samples = new Float32Array(data.buffer)
+
+    if (state.asrMode) {
+      vadService.processASRWithVAD(samples, mainWindow, asrService)
+      return
+    }
+
+    const currentKws = state.kws
+    const currentStream = state.stream
+    if (!currentKws || !currentStream) return
+
+    currentStream.acceptWaveform({
+      sampleRate: KWS_CONFIG.SAMPLE_RATE,
+      samples: samples,
+    })
+
+    while (currentKws.isReady(currentStream)) {
+      currentKws.decode(currentStream)
+    }
+
+    const keyword = currentKws.getResult(currentStream).keyword
+    if (keyword !== '') {
+      if (!state.keywordCounts[keyword]) {
+        state.keywordCounts[keyword] = 0
+      }
+      state.keywordCounts[keyword]++
+
+      mainWindow.webContents.send('keyword-detected', {
+        keyword: keyword,
+        count: state.keywordCounts[keyword],
+        allCounts: state.keywordCounts,
+      })
+
+      vadService.startASR(mainWindow)
+    }
+  })
+
+  ai.start()
+
+  // 清空识别结果
+  state.asrResult = ''
+  asrService.clearASRResult()
+
+  // 发送状态更新
+  mainWindow.webContents.send('asr-done')
+  mainWindow.webContents.send('state-changed', {
+    isRecording: true,
+    asrMode: false,
+  })
+
+  console.log('Recording restarted, ready for wake word')
+}
+
 module.exports = {
   createKeywordSpotter,
   startRecording,
   stopRecording,
   cleanupKWS,
+  restartRecording,
 }

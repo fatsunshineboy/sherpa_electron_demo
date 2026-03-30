@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onASRResult: (callback) => ipcRenderer.on('asr-result', (event, value) => callback(value)),
   onASRError: (callback) => ipcRenderer.on('asr-error', (event, value) => callback(value)),
   onASRStream: (callback) => ipcRenderer.on('asr-stream', (event, value) => callback(value)),
+  onASRClear: (callback) => ipcRenderer.on('asr-clear', (event, value) => callback(value)),
   onASRDone: (callback) => ipcRenderer.on('asr-done', (event, value) => callback(value)),
   onASRFinalResult: (callback) => ipcRenderer.on('asr-final-result', (event, value) => callback(value)),
   onASRStopped: (callback) => ipcRenderer.on('asr-stopped', (event, value) => callback(value)),
@@ -28,6 +29,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTTSPlaying: (callback) => ipcRenderer.on('tts-playing', (event, value) => callback(value)),
   onTTSDone: (callback) => ipcRenderer.on('tts-done', (event, value) => callback(value)),
   onChatError: (callback) => ipcRenderer.on('chat-error', (event, value) => callback(value)),
+  // 静音计时器
+  onSilenceTimerUpdate: (callback) => ipcRenderer.on('silence-timer-update', (event, value) => callback(value)),
+  onSilenceTimerPaused: (callback) => ipcRenderer.on('silence-timer-paused', (event, value) => callback(value)),
+  onSilenceTimerClear: (callback) => ipcRenderer.on('silence-timer-clear', (event, value) => callback(value)),
   // TTS 播放按钮 API
   playTTS: (text) => ipcRenderer.send('play-tts', text),
   onTTSPlayStarted: (callback) => ipcRenderer.on('tts-play-started', (event, value) => callback(value)),

@@ -11,6 +11,11 @@ const kwsState = {
   keywordCounts: {},
 }
 
+// 录音控制状态
+const recordingControlState = {
+  skipAudioInput: false,  // 是否跳过音频输入（对话期间）
+}
+
 // ASR 相关状态
 const asrState = {
   asrMode: false,
@@ -51,6 +56,10 @@ const state = {
   set ai(value) { kwsState.ai = value },
   get keywordCounts() { return kwsState.keywordCounts },
   set keywordCounts(value) { kwsState.keywordCounts = value },
+
+  // 录音控制
+  get skipAudioInput() { return recordingControlState.skipAudioInput },
+  set skipAudioInput(value) { recordingControlState.skipAudioInput = value },
 
   // ASR 状态
   get asrMode() { return asrState.asrMode },
@@ -94,6 +103,11 @@ function resetKwsState() {
   kwsState.keywordCounts = {}
 }
 
+// 重置录音控制状态
+function resetRecordingControlState() {
+  recordingControlState.skipAudioInput = false
+}
+
 // 重置 ASR 状态
 function resetAsrState() {
   asrState.asrMode = false
@@ -125,11 +139,6 @@ function resetChatState() {
   // 注意：不清空 conversationHistory，保留上下文
 }
 
-// 清空对话历史
-function clearConversationHistory() {
-  chatState.conversationHistory = []
-}
-
 // 重置所有状态（停止录音时使用）
 function resetAllState() {
   recordingState.isRecording = false
@@ -137,6 +146,7 @@ function resetAllState() {
   resetKwsState()
   resetVadState()
   resetChatState()
+  resetRecordingControlState()
 }
 
 module.exports = {
@@ -144,7 +154,5 @@ module.exports = {
   resetKwsState,
   resetAsrState,
   resetVadState,
-  resetChatState,
-  clearConversationHistory,
   resetAllState,
 }

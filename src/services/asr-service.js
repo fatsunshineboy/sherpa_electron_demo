@@ -152,37 +152,8 @@ function clearASRResult() {
   Object.keys(segmentResults).forEach(key => delete segmentResults[key])
 }
 
-// 非流式调用 ASR API（备用）
-async function callASRAPI(audioData) {
-  const formData = new FormData()
-  formData.append('model', ASR_CONFIG.MODEL)
-  formData.append('stream', 'false')
-
-  formData.append('file', audioData, {
-    filename: 'recording.wav',
-    contentType: 'audio/wav',
-  })
-
-  const response = await fetch(ASR_CONFIG.URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${ASR_CONFIG.KEY}`,
-      ...formData.getHeaders(),
-    },
-    body: formData,
-  })
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`)
-  }
-
-  const data = await response.json()
-  return data.text || data.result || JSON.stringify(data)
-}
-
 module.exports = {
   processSpeechSegment,
   callASRAPIStreaming,
-  callASRAPI,
   clearASRResult,
 }

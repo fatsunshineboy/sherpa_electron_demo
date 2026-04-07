@@ -4,8 +4,8 @@ const path = require('path')
 // 文件路径
 const PATHS = {
   RAW_KEYWORDS: './keywords_raw.txt',
-  KEYWORDS: './models/keywords.txt',
-  EN_PHONE: './models/en.phone',
+  KEYWORDS: './models/kws/keywords.txt',
+  EN_PHONE: './models/kws/en.phone',
 }
 
 // VAD 配置参数

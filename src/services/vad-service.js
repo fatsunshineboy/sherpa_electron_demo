@@ -70,7 +70,7 @@ function pauseSilenceTimer(mainWindow) {
 function createVad() {
   const config = {
     sileroVad: {
-      model: './models/silero_vad.onnx',
+      model: './models/vad/silero_vad.onnx',
       threshold: 0.5,
       minSpeechDuration: VAD_CONFIG.MIN_SPEECH_DURATION,
       minSilenceDuration: VAD_CONFIG.MIN_SILENCE_DURATION,

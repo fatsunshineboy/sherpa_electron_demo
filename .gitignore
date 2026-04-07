@@ -3,6 +3,7 @@
 /.pnp
 .pnp.js
 .claude
+.omc
 
 # Build output
 /dist

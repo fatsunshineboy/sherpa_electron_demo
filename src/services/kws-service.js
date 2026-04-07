@@ -15,11 +15,11 @@ function createKeywordSpotter() {
     },
     modelConfig: {
       transducer: {
-        encoder: './models/encoder.onnx',
-        decoder: './models/decoder.onnx',
-        joiner: './models/joiner.onnx',
+        encoder: './models/kws/encoder.onnx',
+        decoder: './models/kws/decoder.onnx',
+        joiner: './models/kws/joiner.onnx',
       },
-      tokens: './models/tokens.txt',
+      tokens: './models/kws/tokens.txt',
       numThreads: KWS_CONFIG.NUM_THREADS,
       provider: KWS_CONFIG.PROVIDER,
       debug: KWS_CONFIG.DEBUG,

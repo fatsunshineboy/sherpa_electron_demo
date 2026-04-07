@@ -37,6 +37,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   playTTS: (text) => ipcRenderer.send('play-tts', text),
   onTTSPlayStarted: (callback) => ipcRenderer.on('tts-play-started', (event, value) => callback(value)),
   onTTSPlayDone: (callback) => ipcRenderer.on('tts-play-done', (event, value) => callback(value)),
+  // TTS 模式切换 API
+  getTTSMode: () => ipcRenderer.invoke('get-tts-mode'),
+  toggleTTSMode: () => ipcRenderer.invoke('toggle-tts-mode'),
+  onTTSModeChanged: (callback) => ipcRenderer.on('tts-mode-changed', (event, value) => callback(value)),
   // 全局状态监听
   onStateChanged: (callback) => ipcRenderer.on('state-changed', (event, value) => callback(value)),
 })

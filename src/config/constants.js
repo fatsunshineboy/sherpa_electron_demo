@@ -54,6 +54,11 @@ const TTS_CONFIG = {
   SPEED: 1.0,              // 语速 [0.5, 2.0]
 }
 
+// 本地 TTS 配置（sherpa-onnx）
+const LOCAL_TTS_CONFIG = {
+  SAMPLE_RATE: 16000,  // vocoder-16khz 输出采样率
+}
+
 module.exports = {
   PATHS,
   VAD_CONFIG,

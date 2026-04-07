@@ -1,7 +1,7 @@
 // VAD 服务
 const sherpa_onnx = require('sherpa-onnx-node')
 const { state, resetVadState, resetAsrState, resetKwsState } = require('../utils/state-manager')
-const { VAD_CONFIG, KWS_CONFIG, PATHS } = require('../config/constants')
+const { VAD_CONFIG, KWS_CONFIG, TTS_CONFIG, PATHS } = require('../config/constants')
 const chatService = require('./chat-service')
 const ttsService = require('./tts-service')
 const audioPlayer = require('../audio/audio-player')
@@ -314,11 +314,12 @@ async function processConversation(mainWindow, userText) {
 
     const audioBuffer = await ttsService.synthesize(aiReply)
 
-    // 6. 播放音频
+    // 6. 播放音频 - 根据 TTS 模式选择采样率
     state.isTTSPlaying = true
     mainWindow.webContents.send('tts-playing')
 
-    await audioPlayer.play(audioBuffer)
+    const sampleRate = ttsService.getMode() === 'local' ? 16000 : TTS_CONFIG.SAMPLE_RATE
+    await audioPlayer.play(audioBuffer, sampleRate)
 
     state.isTTSPlaying = false
     mainWindow.webContents.send('tts-done')
@@ -488,7 +489,8 @@ async function playTTS(mainWindow, text) {
     mainWindow.webContents.send('tts-play-started')
 
     const audioBuffer = await ttsService.synthesize(text)
-    await audioPlayer.play(audioBuffer)
+    const sampleRate = ttsService.getMode() === 'local' ? 16000 : TTS_CONFIG.SAMPLE_RATE
+    await audioPlayer.play(audioBuffer, sampleRate)
 
     mainWindow.webContents.send('tts-play-done')
   } catch (error) {

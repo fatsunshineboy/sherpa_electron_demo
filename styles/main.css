@@ -96,9 +96,70 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px;
+  gap: 24px;
 }
 
+/* 状态网格 - 竖排显示在左侧 */
+.status-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  background: white;
+  border-radius: 6px;
+  min-width: 50px;
+}
+
+.status-item-clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.status-item-clickable:hover {
+  background: var(--primary-light);
+  color: white;
+}
+
+.status-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.status-value {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.status-value.local {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-value.remote {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-item-clickable:hover .status-value.local,
+.status-item-clickable:hover .status-value.remote {
+  background: white;
+  color: var(--primary);
+}
+
+/* 录音按钮 */
 .record-btn {
   width: 160px;
   height: 160px;

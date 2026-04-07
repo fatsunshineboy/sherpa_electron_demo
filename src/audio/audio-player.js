@@ -1,6 +1,5 @@
 // 音频播放服务
 const Speaker = require('speaker')
-const { TTS_CONFIG } = require('../config/constants')
 
 // 播放状态
 let isPlaying = false
@@ -9,9 +8,10 @@ let currentSpeaker = null
 /**
  * 播放 PCM 音频 Buffer
  * @param {Buffer} audioBuffer - PCM 音频数据
+ * @param {number} sampleRate - 采样率 (默认 24000，本地 TTS 为 16000)
  * @returns {Promise<void>}
  */
-async function play(audioBuffer) {
+async function play(audioBuffer, sampleRate = 24000) {
   if (isPlaying) {
     stop()
   }
@@ -19,11 +19,11 @@ async function play(audioBuffer) {
   return new Promise((resolve, reject) => {
     isPlaying = true
 
-    // 创建 Speaker 实例，匹配 TTS 输出参数
+    // 创建 Speaker 实例
     currentSpeaker = new Speaker({
-      channels: 1,                        // 单声道
-      bitDepth: 16,                       // 16位
-      sampleRate: TTS_CONFIG.SAMPLE_RATE, // 24000
+      channels: 1,          // 单声道
+      bitDepth: 16,         // 16 位
+      sampleRate: sampleRate,
     })
 
     currentSpeaker.on('close', () => {
@@ -45,7 +45,6 @@ async function play(audioBuffer) {
     currentSpeaker.on('drain', () => {
       currentSpeaker.end()
     })
-    // currentSpeaker.end()
   })
 }
 

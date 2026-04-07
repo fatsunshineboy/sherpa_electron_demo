@@ -4,6 +4,7 @@ const { PATHS } = require('../config/constants')
 const { state } = require('../utils/state-manager')
 const kwsService = require('../services/kws-service')
 const vadService = require('../services/vad-service')
+const ttsService = require('../services/tts-service')
 const windowManager = require('./window-manager')
 const {
   generateKeywords,
@@ -28,6 +29,21 @@ function registerIPCHandlers(mainWindow) {
   // 处理 TTS 播放请求（播放按钮）
   ipcMain.on('play-tts', async (event, text) => {
     await vadService.playTTS(mainWindow, text)
+  })
+
+  // ========== TTS 模式切换 ==========
+
+  // 获取当前 TTS 模式
+  ipcMain.handle('get-tts-mode', () => {
+    return ttsService.getMode()
+  })
+
+  // 切换 TTS 模式
+  ipcMain.handle('toggle-tts-mode', () => {
+    const newMode = ttsService.toggleMode()
+    // 通知所有窗口模式已变更
+    windowManager.broadcast('tts-mode-changed', { mode: newMode })
+    return newMode
   })
 
   // ========== 关键词管理 IPC 处理 ==========

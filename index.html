@@ -33,6 +33,29 @@
       <!-- 录音控制卡片 -->
       <div class="card control-section">
         <div class="control-wrapper">
+          <!-- 状态显示行 -->
+          <div class="status-grid">
+            <div class="status-item">
+              <span class="status-label">KWS</span>
+              <span class="status-value local">本地</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">VAD</span>
+              <span class="status-value local">本地</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">ASR</span>
+              <span class="status-value remote">在线</span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">Chat</span>
+              <span class="status-value remote">在线</span>
+            </div>
+            <div class="status-item status-item-clickable" id="status-tts" title="点击切换 TTS 模式">
+              <span class="status-label">TTS</span>
+              <span class="status-value local" id="tts-mode">本地</span>
+            </div>
+          </div>
           <button id="record-btn" class="record-btn stopped">开始录音</button>
           <!-- 状态显示 -->
           <div class="status-lines">

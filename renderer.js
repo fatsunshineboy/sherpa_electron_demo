@@ -14,10 +14,42 @@ const silenceTimerEl = document.getElementById('silence-timer')
 // 状态显示元素
 const statusKws = document.getElementById('status-kws')
 const statusAsr = document.getElementById('status-asr')
+// TTS 模式显示元素
+const ttsModeEl = document.getElementById('tts-mode')
+const statusTtsEl = document.getElementById('status-tts')
 
 let isRecording = false
 let totalDetections = 0
 let keywordsUpdated = false
+let ttsMode = 'local'
+
+// 更新 TTS 模式显示
+function updateTTSModeDisplay(mode) {
+  ttsMode = mode
+  if (ttsModeEl) {
+    ttsModeEl.textContent = mode === 'local' ? '本地' : '在线'
+    ttsModeEl.className = 'status-value ' + (mode === 'local' ? 'local' : 'remote')
+  }
+}
+
+// 初始化获取 TTS 模式
+window.electronAPI.getTTSMode().then(mode => {
+  updateTTSModeDisplay(mode)
+})
+
+// TTS 状态栏点击切换
+if (statusTtsEl) {
+  statusTtsEl.addEventListener('click', () => {
+    window.electronAPI.toggleTTSMode().then(newMode => {
+      updateTTSModeDisplay(newMode)
+    })
+  })
+}
+
+// 监听 TTS 模式变化
+window.electronAPI.onTTSModeChanged((data) => {
+  updateTTSModeDisplay(data.mode)
+})
 
 // 静音计时器显示
 function updateSilenceTimerDisplay(remaining, isPaused) {
@@ -42,15 +74,12 @@ function clearSilenceTimerDisplay() {
 // 状态更新函数：两行互斥显示
 function updateStatusDisplay(isRecording, asrMode) {
   if (!isRecording) {
-    // 未录音：两行都不激活
     statusKws.classList.remove('kws-active')
     statusAsr.classList.remove('asr-active')
   } else if (asrMode) {
-    // ASR 模式：识别中激活，等待唤醒不激活
     statusKws.classList.remove('kws-active')
     statusAsr.classList.add('asr-active')
   } else {
-    // KWS 模式：等待唤醒激活，识别中不激活
     statusKws.classList.add('kws-active')
     statusAsr.classList.remove('asr-active')
   }
@@ -70,13 +99,11 @@ let segmentResults = {}
 window.electronAPI.onKeywordDetected((data) => {
   totalDetections++
 
-  // 移除空状态提示
   const emptyState = logContainer.querySelector('.log-empty')
   if (emptyState) {
     emptyState.remove()
   }
 
-  // 创建日志项
   const logItem = document.createElement('div')
   logItem.className = 'log-item'
   const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -87,10 +114,7 @@ window.electronAPI.onKeywordDetected((data) => {
     <span class="log-text">检测到 "${data.keyword}"</span>
   `
 
-  // 插入到顶部
   logContainer.insertBefore(logItem, logContainer.firstChild)
-
-  // 更新状态
   statusDiv.textContent = `已检测到 ${totalDetections} 次唤醒`
 })
 
@@ -103,7 +127,6 @@ window.electronAPI.onASRStarted((data) => {
   segmentResults = {}
   asrText.textContent = ''
   asrStatus.textContent = `已唤醒，请说话...`
-  // 清空计时器显示（进入 ASR 模式时由后端发送更新）
   clearSilenceTimerDisplay()
 })
 
@@ -115,7 +138,6 @@ window.electronAPI.onASRProcessing(() => {
 
 // 处理 ASR 流式数据事件
 window.electronAPI.onASRStream((data) => {
-  // 如果是新的 segment，保留之前 segment 的结果
   if (data.segmentId !== currentSegmentId) {
     if (currentSegmentId !== null && segmentResults[currentSegmentId]) {
       asrContent = ''
@@ -128,10 +150,8 @@ window.electronAPI.onASRStream((data) => {
     currentSegmentId = data.segmentId
   }
 
-  // 更新当前 segment 的最新结果
   segmentResults[data.segmentId] = data.text
 
-  // 重新构建完整文本
   let fullText = ''
   for (let i = 1; i <= data.segmentId; i++) {
     if (segmentResults[i]) {
@@ -144,7 +164,7 @@ window.electronAPI.onASRStream((data) => {
   asrStatus.textContent = data.isFinal ? '识别完成' : '正在实时识别...'
 })
 
-// 处理 ASR 清空事件（对话完成后）
+// 处理 ASR 清空事件
 window.electronAPI.onASRClear && window.electronAPI.onASRClear(() => {
   asrContent = ''
   currentSegmentId = null
@@ -162,7 +182,7 @@ window.electronAPI.onSilenceTimerPaused && window.electronAPI.onSilenceTimerPaus
   updateSilenceTimerDisplay(data.remaining, true)
 })
 
-// 处理静音计时器清除（用户开始说话时）
+// 处理静音计时器清除
 window.electronAPI.onSilenceTimerClear && window.electronAPI.onSilenceTimerClear(() => {
   clearSilenceTimerDisplay()
 })
@@ -184,7 +204,7 @@ window.electronAPI.onASRStopped && window.electronAPI.onASRStopped(() => {
   clearSilenceTimerDisplay()
 })
 
-// 处理 ASR 完成事件（退出 ASR 模式）
+// 处理 ASR 完成事件
 window.electronAPI.onASRDone(() => {
   asrBox.classList.remove('active', 'processing')
   asrStatus.textContent = '识别结束，返回唤醒模式'
@@ -196,7 +216,6 @@ window.electronAPI.onASRDone(() => {
 
 // 保存识别结果到历史记录
 function saveToHistory(userText, aiText) {
-  // 移除空状态提示
   const emptyState = historyContainer.querySelector('.history-empty')
   if (emptyState) {
     emptyState.remove()
@@ -226,7 +245,7 @@ function escapeHtml(text) {
 // 处理 ASR 错误事件
 window.electronAPI.onASRError((data) => {
   asrText.textContent = '识别失败'
-  asrStatus.textContent = `错误: ${data.error}`
+  asrStatus.textContent = `错误：${data.error}`
   asrContent = ''
   currentSegmentId = null
   segmentResults = {}
@@ -256,7 +275,6 @@ recordBtn.addEventListener('click', () => {
     recordBtn.className = 'record-btn recording'
     statusDiv.textContent = '正在录音，请说出关键词...'
   } else {
-    // 手动停止时如果有未完成的识别结果，保存为未完成对话
     if (asrContent && asrContent.trim()) {
       saveToHistory(asrContent, '(未完成)')
     }
@@ -309,11 +327,8 @@ window.electronAPI.onTTSPlaying(() => {
 // 处理 TTS 完成事件
 window.electronAPI.onTTSDone(() => {
   chatStatus.classList.remove('visible')
-
-  // 显示播放按钮
   chatAIPlay.classList.add('visible')
 
-  // 将对话保存到历史记录
   const userText = chatUser.textContent
   const aiText = chatAIText.textContent
   if (userText && aiText) {
@@ -323,16 +338,14 @@ window.electronAPI.onTTSDone(() => {
 
 // 处理对话错误事件
 window.electronAPI.onChatError((data) => {
-  chatStatus.textContent = `错误: ${data.error}`
+  chatStatus.textContent = `错误：${data.error}`
   chatStatus.classList.add('error')
 
-  // 如果有识别结果但对话失败，至少保存识别结果
   const userText = chatUser.textContent
   if (userText) {
-    saveToHistory(userText, `(对话失败: ${data.error})`)
+    saveToHistory(userText, `(对话失败：${data.error})`)
   }
 
-  // 3秒后清除错误状态
   setTimeout(() => {
     chatStatus.classList.remove('visible', 'error')
     chatBox.classList.remove('active')

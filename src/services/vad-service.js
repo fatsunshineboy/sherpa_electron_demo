@@ -209,6 +209,7 @@ function processASRWithVAD(samples, mainWindow, asrService) {
       console.log(`VAD: Speech segment ended, duration: ${duration}s`)
 
       // isForced = false，表示正常结束，会触发 Chat
+      // 注意：不立即启动静音计时器，等待 ASR 处理完成且 Chat 返回后再启动
       asrService.processSpeechSegment(mainWindow, segment.samples, false)
     }
   }

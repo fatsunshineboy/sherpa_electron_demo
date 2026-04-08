@@ -134,7 +134,7 @@ async function processSpeechSegmentLocal(mainWindow, samples, segmentId, isForce
 
   // 获取识别结果
   const result = recognizer.getResult(stream)
-  const text = result.txt  // Qwen 模型返回 { txt: string }
+  const text = result.text
 
   // 清理流资源
   try { stream.free() } catch(e) {}
@@ -280,4 +280,5 @@ module.exports = {
   setMode,
   toggleMode,
   cleanup,
+  initLocalRecognizer,
 }

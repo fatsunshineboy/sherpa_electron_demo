@@ -17,11 +17,15 @@ const statusAsr = document.getElementById('status-asr')
 // TTS 模式显示元素
 const ttsModeEl = document.getElementById('tts-mode')
 const statusTtsEl = document.getElementById('status-tts')
+// ASR 模式显示元素
+const asrModeEl = document.getElementById('asr-mode')
+const statusAsrEl = document.getElementById('status-asr-el')
 
 let isRecording = false
 let totalDetections = 0
 let keywordsUpdated = false
 let ttsMode = 'local'
+let asrMode = 'local'  // 默认本地模式
 
 // 更新 TTS 模式显示
 function updateTTSModeDisplay(mode) {
@@ -32,9 +36,23 @@ function updateTTSModeDisplay(mode) {
   }
 }
 
+// 更新 ASR 模式显示
+function updateASRModeDisplay(mode) {
+  asrMode = mode
+  if (asrModeEl) {
+    asrModeEl.textContent = mode === 'local' ? '本地' : '在线'
+    asrModeEl.className = 'status-value ' + (mode === 'local' ? 'local' : 'remote')
+  }
+}
+
 // 初始化获取 TTS 模式
 window.electronAPI.getTTSMode().then(mode => {
   updateTTSModeDisplay(mode)
+})
+
+// 初始化获取 ASR 模式
+window.electronAPI.getASRMode().then(mode => {
+  updateASRModeDisplay(mode)
 })
 
 // TTS 状态栏点击切换
@@ -46,9 +64,23 @@ if (statusTtsEl) {
   })
 }
 
+// ASR 状态栏点击切换
+if (statusAsrEl) {
+  statusAsrEl.addEventListener('click', () => {
+    window.electronAPI.toggleASRMode().then(newMode => {
+      updateASRModeDisplay(newMode)
+    })
+  })
+}
+
 // 监听 TTS 模式变化
 window.electronAPI.onTTSModeChanged((data) => {
   updateTTSModeDisplay(data.mode)
+})
+
+// 监听 ASR 模式变化
+window.electronAPI.onASRModeChanged((data) => {
+  updateASRModeDisplay(data.mode)
 })
 
 // 静音计时器显示

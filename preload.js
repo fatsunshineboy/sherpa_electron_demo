@@ -41,6 +41,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getTTSMode: () => ipcRenderer.invoke('get-tts-mode'),
   toggleTTSMode: () => ipcRenderer.invoke('toggle-tts-mode'),
   onTTSModeChanged: (callback) => ipcRenderer.on('tts-mode-changed', (event, value) => callback(value)),
+  // ASR 模式切换 API
+  getASRMode: () => ipcRenderer.invoke('get-asr-mode'),
+  toggleASRMode: () => ipcRenderer.invoke('toggle-asr-mode'),
+  onASRModeChanged: (callback) => ipcRenderer.on('asr-mode-changed', (event, value) => callback(value)),
   // 全局状态监听
   onStateChanged: (callback) => ipcRenderer.on('state-changed', (event, value) => callback(value)),
 })

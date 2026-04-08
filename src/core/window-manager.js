@@ -26,7 +26,7 @@ const windowManager = {
     // 加载完成后显示窗口并打开开发者工具
     win.once('ready-to-show', () => {
       win.show()
-      win.webContents.openDevTools()
+      // win.webContents.openDevTools()
     })
 
     this.mainWindow = win

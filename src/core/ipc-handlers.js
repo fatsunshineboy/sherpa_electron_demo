@@ -46,6 +46,31 @@ function registerIPCHandlers(mainWindow) {
     return newMode
   })
 
+  // ========== ASR 模式切换 ==========
+
+  // 获取当前 ASR 模式
+  ipcMain.handle('get-asr-mode', () => {
+    const asrService = require('../services/asr-service')
+    return asrService.getMode()
+  })
+
+  // 切换 ASR 模式
+  ipcMain.handle('toggle-asr-mode', () => {
+    const asrService = require('../services/asr-service')
+    const newMode = asrService.toggleMode()
+    // 通知所有窗口模式已变更
+    windowManager.broadcast('asr-mode-changed', { mode: newMode })
+    return newMode
+  })
+
+  // 设置 ASR 模式
+  ipcMain.handle('set-asr-mode', (event, mode) => {
+    const asrService = require('../services/asr-service')
+    const newMode = asrService.setMode(mode)
+    windowManager.broadcast('asr-mode-changed', { mode: newMode })
+    return newMode
+  })
+
   // ========== 关键词管理 IPC 处理 ==========
 
   // 获取原始关键词列表

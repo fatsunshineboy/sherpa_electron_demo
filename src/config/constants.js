@@ -3,7 +3,7 @@ const path = require('path')
 
 // 文件路径
 const PATHS = {
-  RAW_KEYWORDS: './keywords_raw.txt',
+  RAW_KEYWORDS: './models/kws/keywords_raw.txt',
   KEYWORDS: './models/kws/keywords.txt',
   EN_PHONE: './models/kws/en.phone',
 }
@@ -59,6 +59,17 @@ const LOCAL_TTS_CONFIG = {
   SAMPLE_RATE: 16000,  // vocoder-16khz 输出采样率
 }
 
+// 本地 ASR 配置（sherpa-onnx OfflineRecognizer）
+const LOCAL_ASR_CONFIG = {
+  SAMPLE_RATE: 16000,
+  FEATURE_DIM: 80,
+  // 模型路径
+  CONV_FRONTEND: './models/qwenAsr/conv_frontend.onnx',
+  ENCODER: './models/qwenAsr/encoder.onnx',
+  DECODER: './models/qwenAsr/decoder.onnx',
+  TOKENIZER: './models/qwenAsr/tokenizer',
+}
+
 module.exports = {
   PATHS,
   VAD_CONFIG,
@@ -66,4 +77,6 @@ module.exports = {
   ASR_CONFIG,
   CHAT_CONFIG,
   TTS_CONFIG,
+  LOCAL_TTS_CONFIG,
+  LOCAL_ASR_CONFIG,  // 新增
 }

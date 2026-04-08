@@ -210,9 +210,6 @@ function processASRWithVAD(samples, mainWindow, asrService) {
 
       // isForced = false，表示正常结束，会触发 Chat
       asrService.processSpeechSegment(mainWindow, segment.samples, false)
-
-      // 语音段完成后，重启静音计时器
-      startSilenceTimer(mainWindow)
     }
   }
 }

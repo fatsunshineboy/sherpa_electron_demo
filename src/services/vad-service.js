@@ -7,65 +7,7 @@ const ttsService = require('./tts-service')
 const audioPlayer = require('../audio/audio-player')
 const asrService = require('./asr-service')
 const { createAudioDataCallback, createAudioInput } = require('../audio/audio-utils')
-
-// 静音计时器相关状态
-let silenceTimerRemaining = VAD_CONFIG.SILENCE_TIMEOUT // 剩余时间（毫秒）
-let silenceTimerStartTime = null // 计时器开始时间
-let silenceTimerInterval = null // 倒计时更新定时器
-
-// 启动静音计时器：SILENCE_TIMEOUT 秒内没有新语音则退出 ASR 回到 KWS 模式
-function startSilenceTimer(mainWindow) {
-  // 清除现有的计时器
-  if (silenceTimerInterval) {
-    clearInterval(silenceTimerInterval)
-    silenceTimerInterval = null
-  }
-  if (state.silenceTimer) {
-    clearTimeout(state.silenceTimer)
-    state.silenceTimer = null
-  }
-
-  // 重置剩余时间
-  silenceTimerRemaining = VAD_CONFIG.SILENCE_TIMEOUT
-  silenceTimerStartTime = Date.now()
-
-  // 启动实际退出计时器
-  state.silenceTimer = setTimeout(() => {
-    console.log('Silence too long, exiting ASR')
-    finishASR(mainWindow)
-  }, silenceTimerRemaining)
-
-  // 启动倒计时更新（每 100ms 更新一次前端显示）
-  silenceTimerInterval = setInterval(() => {
-    const elapsed = Date.now() - silenceTimerStartTime
-    const remaining = Math.max(0, silenceTimerRemaining - elapsed)
-    mainWindow.webContents.send('silence-timer-update', {
-      remaining: remaining,
-      total: silenceTimerRemaining,
-    })
-  }, 100)
-}
-
-// 暂停静音计时器（Chat+TTS 期间调用）
-function pauseSilenceTimer(mainWindow) {
-  if (silenceTimerInterval) {
-    clearInterval(silenceTimerInterval)
-    silenceTimerInterval = null
-  }
-  if (state.silenceTimer) {
-    clearTimeout(state.silenceTimer)
-    state.silenceTimer = null
-  }
-
-  // 计算剩余时间
-  const elapsed = Date.now() - silenceTimerStartTime
-  silenceTimerRemaining = Math.max(0, silenceTimerRemaining - elapsed)
-
-  // 通知前端暂停状态
-  mainWindow.webContents.send('silence-timer-paused', {
-    remaining: silenceTimerRemaining,
-  })
-}
+const silenceTimer = require('./silence-timer')
 
 // 创建 VAD 实例
 function createVad() {
@@ -110,7 +52,7 @@ function startASR(mainWindow) {
   state.speechStartTime = null
 
   // 启动静音定时器：如果进入 ASR 模式后 SILENCE_TIMEOUT 秒内没有检测到任何语音，则退出 ASR
-  startSilenceTimer(mainWindow)
+  silenceTimer.start(mainWindow, () => finishASR(mainWindow))
 
   mainWindow.webContents.send('asr-started', { keyword: state.keywordCounts })
 
@@ -146,14 +88,7 @@ function processASRWithVAD(samples, mainWindow) {
 
     if (detected && !state.isSpeechActive) {
       // 语音开始，清除定时器（用户已经开始说话，不需要静音超时）
-      if (state.silenceTimer) {
-        clearTimeout(state.silenceTimer)
-        state.silenceTimer = null
-      }
-      if (silenceTimerInterval) {
-        clearInterval(silenceTimerInterval)
-        silenceTimerInterval = null
-      }
+      silenceTimer.clear()
       // 语音开始
       state.isSpeechActive = true
       state.speechStartTime = Date.now()
@@ -162,7 +97,7 @@ function processASRWithVAD(samples, mainWindow) {
         message: '正在聆听...',
       })
       // 清空倒计时显示
-      mainWindow.webContents.send('silence-timer-clear')
+      silenceTimer.clearDisplay(mainWindow)
     }
 
     // 检查是否超过最大持续时间
@@ -221,14 +156,7 @@ async function finishASR(mainWindow) {
   if (!state.asrMode) return
 
   // 清除定时器
-  if (state.silenceTimer) {
-    clearTimeout(state.silenceTimer)
-    state.silenceTimer = null
-  }
-  if (silenceTimerInterval) {
-    clearInterval(silenceTimerInterval)
-    silenceTimerInterval = null
-  }
+  silenceTimer.clear()
 
   state.asrMode = false
 
@@ -284,7 +212,7 @@ async function processConversation(mainWindow, userText) {
     state.skipAudioInput = true
 
     // 暂停静音计时器（Chat+TTS 期间不计时）
-    pauseSilenceTimer(mainWindow)
+    silenceTimer.pause(mainWindow)
 
     // 2. 发送对话开始事件
     mainWindow.webContents.send('chat-started', { userText })
@@ -365,9 +293,7 @@ function restartRecordingInASRMode(mainWindow) {
   console.log('restartRecordingInASRMode: stopping and recreating audio devices...')
 
   // 重置所有状态（包含资源释放）
-  resetVadState()
-  resetAsrState()
-  resetKwsState()
+  resetAllState()
 
   // 恢复 ASR 模式
   state.asrMode = true
@@ -390,7 +316,7 @@ function restartRecordingInASRMode(mainWindow) {
   state.ai.start()
 
   // 启动静音计时器
-  startSilenceTimer(mainWindow)
+  silenceTimer.start(mainWindow, () => finishASR(mainWindow))
 
   console.log('restartRecordingInASRMode: completed, ASR mode active')
 }

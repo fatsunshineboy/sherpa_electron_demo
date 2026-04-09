@@ -1,19 +1,15 @@
-// 录音状态
-const recordingState = {
+// 音频状态
+const audioState = {
+  ai: null,
   isRecording: false,
+  skipAudioInput: false,  // 是否跳过音频输入（对话期间）
 }
 
 // KWS 相关状态
 const kwsState = {
   kws: null,
   stream: null,
-  ai: null,
   keywordCounts: {},
-}
-
-// 录音控制状态
-const recordingControlState = {
-  skipAudioInput: false,  // 是否跳过音频输入（对话期间）
 }
 
 // ASR 相关状态
@@ -44,22 +40,22 @@ const chatState = {
 // 状态查询方法
 const state = {
   // 录音状态
-  get isRecording() { return recordingState.isRecording },
-  set isRecording(value) { recordingState.isRecording = value },
+  get isRecording() { return audioState.isRecording },
+  set isRecording(value) { audioState.isRecording = value },
 
   // KWS 状态
   get kws() { return kwsState.kws },
   set kws(value) { kwsState.kws = value },
   get stream() { return kwsState.stream },
   set stream(value) { kwsState.stream = value },
-  get ai() { return kwsState.ai },
-  set ai(value) { kwsState.ai = value },
+  get ai() { return audioState.ai },
+  set ai(value) { audioState.ai = value },
   get keywordCounts() { return kwsState.keywordCounts },
   set keywordCounts(value) { kwsState.keywordCounts = value },
 
   // 录音控制
-  get skipAudioInput() { return recordingControlState.skipAudioInput },
-  set skipAudioInput(value) { recordingControlState.skipAudioInput = value },
+  get skipAudioInput() { return audioState.skipAudioInput },
+  set skipAudioInput(value) { audioState.skipAudioInput = value },
 
   // ASR 状态
   get asrMode() { return asrState.asrMode },
@@ -95,6 +91,17 @@ const state = {
   set lastAIReply(value) { chatState.lastAIReply = value },
 }
 
+// 重置音频状态
+function resetAudioState() {
+  if (audioState.ai) {
+    try { audioState.ai.stop() } catch(e) {}
+    audioState.ai = null
+  }
+  audioState.isRecording = false
+  audioState.skipAudioInput = false
+}
+
+
 // 重置 KWS 状态（包含资源释放）
 function resetKwsState() {
   if (kwsState.stream) {
@@ -105,16 +112,7 @@ function resetKwsState() {
     try { kwsState.kws.free() } catch(e) {}
     kwsState.kws = null
   }
-  if (kwsState.ai) {
-    try { kwsState.ai.quit() } catch(e) {}
-    kwsState.ai = null
-  }
   kwsState.keywordCounts = {}
-}
-
-// 重置录音控制状态
-function resetRecordingControlState() {
-  recordingControlState.skipAudioInput = false
 }
 
 // 重置 ASR 状态
@@ -150,12 +148,11 @@ function resetChatState() {
 
 // 重置所有状态（停止录音时使用，包含资源释放）
 function resetAllState() {
-  recordingState.isRecording = false
-  asrState.asrMode = false
+  resetAudioState()
   resetKwsState()
   resetVadState()
+  resetAsrState()
   resetChatState()
-  resetRecordingControlState()
 }
 
 module.exports = {

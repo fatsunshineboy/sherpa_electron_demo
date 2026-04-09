@@ -105,6 +105,12 @@ function createAudioDataCallback(mainWindow) {
  * @returns {Object} AudioIO 实例
  */
 function createAudioInput(options = {}) {
+
+  if(state.ai){
+    try { state.ai.stop() } catch(e) {}
+    state.ai = null
+  }
+
   return new portAudio.AudioIO({
     inOptions: {
       channelCount: 1,

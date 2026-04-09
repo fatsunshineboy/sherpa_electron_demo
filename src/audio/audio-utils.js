@@ -1,5 +1,7 @@
-// 音频工具
-const { VAD_CONFIG } = require('../config/constants')
+const { KWS_CONFIG } = require('../config/constants')
+const { state } = require('../utils/state-manager')
+
+const portAudio = require('naudiodon2')
 
 // 将 Float32 音频数据转换为 WAV 格式 Buffer
 function createWavBuffer(float32Data, sampleRate = 16000) {
@@ -49,7 +51,75 @@ function mergeSpeechSegments(segments) {
   return mergedSamples
 }
 
+/**
+ * 创建 KWS/VAD 音频处理的音频数据回调
+ * @param {BrowserWindow} mainWindow - Electron 窗口
+ * @returns {Function} 音频数据回调函数
+ */
+function createAudioDataCallback(mainWindow) {
+  return function handleAudioData(data) {
+    if (!state.isRecording) return
+    if (state.skipAudioInput) return
+
+    const samples = new Float32Array(data.buffer)
+
+    if (state.asrMode) {
+      require('../services/vad-service').processASRWithVAD(samples, mainWindow)
+      return
+    }
+
+    const currentKws = state.kws
+    const currentStream = state.stream
+    if (!currentKws || !currentStream) return
+
+    currentStream.acceptWaveform({
+      sampleRate: KWS_CONFIG.SAMPLE_RATE,
+      samples: samples,
+    })
+
+    while (currentKws.isReady(currentStream)) {
+      currentKws.decode(currentStream)
+    }
+
+    const keyword = currentKws.getResult(currentStream).keyword
+    if (keyword !== '') {
+      if (!state.keywordCounts[keyword]) {
+        state.keywordCounts[keyword] = 0
+      }
+      state.keywordCounts[keyword]++
+
+      mainWindow.webContents.send('keyword-detected', {
+        keyword: keyword,
+        count: state.keywordCounts[keyword],
+        allCounts: state.keywordCounts,
+      })
+
+      require('../services/vad-service').startASR(mainWindow)
+    }
+  }
+}
+
+/**
+ * 创建 AudioIO 输入实例
+ * @param {Object} options - 可选的覆盖选项
+ * @returns {Object} AudioIO 实例
+ */
+function createAudioInput(options = {}) {
+  return new portAudio.AudioIO({
+    inOptions: {
+      channelCount: 1,
+      closeOnError: true,
+      deviceId: -1,
+      sampleFormat: portAudio.SampleFormatFloat32,
+      sampleRate: options.sampleRate || KWS_CONFIG.SAMPLE_RATE,
+      ...options,
+    },
+  })
+}
+
 module.exports = {
   createWavBuffer,
   mergeSpeechSegments,
+  createAudioDataCallback,
+  createAudioInput
 }

@@ -1,11 +1,12 @@
 // IPC 处理器
 const { ipcMain } = require('electron/main')
-const { PATHS } = require('../config/constants')
-const { state } = require('../utils/state-manager')
+const { state,resetKwsState } = require('../utils/state-manager')
 const kwsService = require('../services/kws-service')
 const vadService = require('../services/vad-service')
 const ttsService = require('../services/tts-service')
 const windowManager = require('./window-manager')
+const { KWS_CONFIG } = require('../config/constants')
+
 const {
   generateKeywords,
   loadRawKeywords,
@@ -75,14 +76,14 @@ function registerIPCHandlers(mainWindow) {
 
   // 获取原始关键词列表
   ipcMain.handle('get-keywords', () => {
-    return loadRawKeywords(PATHS.RAW_KEYWORDS)
+    return loadRawKeywords(KWS_CONFIG.RAW_KEYWORDS)
   })
 
   // 保存原始关键词列表
   ipcMain.handle('save-keywords', (event, keywords) => {
     try {
       const content = keywords.join('\n') + '\n'
-      saveRawKeywords(PATHS.RAW_KEYWORDS, content)
+      saveRawKeywords(KWS_CONFIG.RAW_KEYWORDS, content)
       return { success: true }
     } catch (err) {
       throw new Error(err.message)
@@ -92,7 +93,7 @@ function registerIPCHandlers(mainWindow) {
   // 预览关键词转换（不保存文件）
   ipcMain.handle('preview-keywords', (event, keywords) => {
     try {
-      const enPhoneDict = loadEnPhone(PATHS.EN_PHONE)
+      const enPhoneDict = loadEnPhone(KWS_CONFIG.EN_PHONE)
       const result = keywords.map(keyword => {
         const phones = convertKeyword(keyword, enPhoneDict)
         return {
@@ -110,9 +111,9 @@ function registerIPCHandlers(mainWindow) {
   ipcMain.handle('generate-keywords-file', async () => {
     try {
       const count = generateKeywords(
-        PATHS.RAW_KEYWORDS,
-        PATHS.KEYWORDS,
-        PATHS.EN_PHONE
+        KWS_CONFIG.RAW_KEYWORDS,
+        KWS_CONFIG.KEYWORDS,
+        KWS_CONFIG.EN_PHONE
       )
 
       // 如果正在录音，停止并清理资源
@@ -121,7 +122,7 @@ function registerIPCHandlers(mainWindow) {
       }
 
       // 清理 KWS 实例，强制下次录音时重新创建
-      kwsService.cleanupKWS()
+      resetKwsState()
 
       // 通知所有窗口关键词已更新
       windowManager.broadcast('keywords-updated', { count })

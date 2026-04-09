@@ -1,6 +1,6 @@
 // TTS 服务 - 文本转语音
 const fetch = require('node-fetch')
-const { TTS_CONFIG } = require('../config/constants')
+const { TTS_CONFIG,LOCAL_TTS_CONFIG } = require('../config/constants')
 const sherpa_onnx = require('sherpa-onnx-node')
 
 // TTS 模式：'local' 或 'api'
@@ -16,18 +16,18 @@ function initLocalTts() {
   const config = {
     model: {
       matcha: {
-        acousticModel: './models/tts/model-steps-3.onnx',
-        vocoder: './models/tts/vocos-16khz-univ.onnx',
-        lexicon: './models/tts/lexicon.txt',
-        tokens: './models/tts/tokens.txt',
-        dataDir: './models/tts/espeak-ng-data',
+        acousticModel: LOCAL_TTS_CONFIG.ACOUSTICMODEL,
+        vocoder: LOCAL_TTS_CONFIG.VOCODER,
+        lexicon: LOCAL_TTS_CONFIG.LEXICON,
+        tokens: LOCAL_TTS_CONFIG.TOKENS,
+        dataDir: LOCAL_TTS_CONFIG.DATADIR,
       },
       debug: false,
       numThreads: 1,
       provider: 'cpu',
     },
     maxNumSentences: 1,
-    ruleFsts: './models/tts/phone-zh.fst,./models/tts/date-zh.fst,./models/tts/number-zh.fst',
+    ruleFsts: LOCAL_TTS_CONFIG.RULEFSTS,
   }
 
   localTts = new sherpa_onnx.OfflineTts(config)

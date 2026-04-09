@@ -1,58 +1,36 @@
 const fs = require('fs')
-const path = require('path')
 const { pinyin } = require('pinyin')
 
-// 加载英文发音词典
-function loadEnPhone(filePath) {
-  const dict = {}
-  const content = fs.readFileSync(filePath, 'utf-8')
-  for (const line of content.split('\n')) {
-    const parts = line.trim().split(/\s+/)
-    if (parts.length >= 2) {
-      dict[parts[0].toUpperCase()] = parts.slice(1).join(' ')
+// 根据声调数字给韵母加上声调
+function applyToneToFinal(final, tone) {
+  if (!tone || !final) return final
+
+  const toneNum = parseInt(tone)
+  if (toneNum === 0 || toneNum > 4) return final
+
+  // 找韵母中的元音并加上声调
+  const vowels = 'aeiouv'
+  const toneMarks = {
+    'a': ['a', 'ā', 'á', 'ǎ', 'à'],
+    'e': ['e', 'ē', 'é', 'ě', 'è'],
+    'i': ['i', 'ī', 'í', 'ǐ', 'ì'],
+    'o': ['o', 'ō', 'ó', 'ǒ', 'ò'],
+    'u': ['u', 'ū', 'ú', 'ǔ', 'ù'],
+    'v': ['ü', 'ǖ', 'ǘ', 'ǚ', 'ǜ'],
+  }
+
+  // 按优先级找元音
+  const priority = 'aeouiv'
+  for (const v of priority) {
+    const idx = final.indexOf(v)
+    if (idx !== -1) {
+      const toned = toneMarks[v][toneNum]
+      return final.slice(0, idx) + toned + final.slice(idx + 1)
     }
   }
-  return dict
-}
 
-// 拼音拆分表 - 将完整拼音拆分为模型所需的单个token
-const pinyinSplitMap = {
-  // 声母
-  'b': ['b'], 'p': ['p'], 'm': ['m'], 'f': ['f'],
-  'd': ['d'], 't': ['t'], 'n': ['n'], 'l': ['l'],
-  'g': ['g'], 'k': ['k'], 'h': ['h'],
-  'j': ['j'], 'q': ['q'], 'x': ['x'],
-  'zh': ['zh'], 'ch': ['ch'], 'sh': ['sh'], 'r': ['r'],
-  'z': ['z'], 'c': ['c'], 's': ['s'],
-  'y': ['y'], 'w': ['w'],
-  // 单韵母
-  'a': ['a'], 'o': ['o'], 'e': ['e'], 'i': ['i'], 'u': ['u'], 'v': ['ü'],
-  // 带声调的单韵母
-  'ā': ['ā'], 'á': ['á'], 'ǎ': ['ǎ'], 'à': ['à'],
-  'ō': ['ō'], 'ó': ['ó'], 'ǒ': ['ǒ'], 'ò': ['ò'],
-  'ē': ['ē'], 'é': ['é'], 'ě': ['ě'], 'è': ['è'],
-  'ī': ['ī'], 'í': ['í'], 'ǐ': ['ǐ'], 'ì': ['ì'],
-  'ū': ['ū'], 'ú': ['ú'], 'ǔ': ['ǔ'], 'ù': ['ù'],
-  'ǖ': ['ǖ'], 'ǘ': ['ǘ'], 'ǚ': ['ǚ'], 'ǜ': ['ǜ'],
+  return final
 }
-
-// 根据 tokens.txt 中的定义，支持的韵母token
-const validTokens = new Set([
-  // 声母
-  'b', 'c', 'ch', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 'sh', 't', 'w', 'x', 'y', 'z', 'zh',
-  // 韵母
-  'a', 'ai', 'an', 'ang', 'ao', 'e', 'ei', 'en', 'eng', 'er', 'i', 'ia', 'ian', 'iang', 'iao', 'ie', 'in', 'ing', 'iu',
-  'o', 'ong', 'ou', 'u', 'ua', 'uai', 'uan', 'uang', 'ue', 'ui', 'un', 'uo',
-  // 带声调韵母
-  'à', 'ài', 'àn', 'àng', 'ào', 'á', 'ái', 'án', 'áng', 'áo', 'è', 'èi', 'èn', 'èng', 'ér',
-  'ì', 'ín', 'ìng', 'í', 'ò', 'òng', 'òu', 'ó', 'óng', 'óu', 'ù', 'ún', 'ú',
-  'ā', 'āi', 'ān', 'āng', 'āo', 'ē', 'ēi', 'ēn', 'ēng', 'ě', 'ī', 'īn', 'īng', 'ō', 'ōng', 'ōu', 'ū', 'ūn',
-  'ià', 'iàn', 'iàng', 'iào', 'iá', 'ián', 'iáng', 'iáo', 'iè', 'ié', 'iòng', 'ióng', 'iù', 'iú',
-  'iā', 'iān', 'iāng', 'iāo', 'iē', 'iě', 'iōng', 'iū', 'iǎ', 'iǎn', 'iǎng', 'iǎo', 'iǒng', 'iǔ',
-  'uà', 'uài', 'uàn', 'uàng', 'uá', 'uái', 'uán', 'uáng', 'uè', 'ué', 'uì', 'uí', 'uò', 'uó',
-  'uā', 'uāi', 'uān', 'uāng', 'uē', 'uě', 'uī', 'uō', 'uǎ', 'uǎi', 'uǎn', 'uǎng', 'uǐ', 'uǒ',
-  'üè', 'üě', 'ia', 'ian', 'iang', 'iao', 'ie', 'in', 'ing', 'iu', 'ua', 'uai', 'uan', 'uang', 'ue', 'ui', 'un', 'uo',
-])
 
 // 拆分拼音音节为单个token（如 xiao3 -> x iǎo，guang1 -> g uāng）
 function splitPinyinSyllable(syllable) {
@@ -107,40 +85,32 @@ function splitPinyinSyllable(syllable) {
   return result
 }
 
-// 根据声调数字给韵母加上声调
-function applyToneToFinal(final, tone) {
-  if (!tone || !final) return final
+// 中文转拼音（数字声调格式，然后拆分）
+function chineseToPinyin(text) {
+  const result = pinyin(text, { style: pinyin.STYLE_TONE2, segment: false })
+  const syllables = result.flat()
 
-  const toneNum = parseInt(tone)
-  if (toneNum === 0 || toneNum > 4) return final
-
-  // 找韵母中的元音并加上声调
-  const vowels = 'aeiouv'
-  const toneMarks = {
-    'a': ['a', 'ā', 'á', 'ǎ', 'à'],
-    'e': ['e', 'ē', 'é', 'ě', 'è'],
-    'i': ['i', 'ī', 'í', 'ǐ', 'ì'],
-    'o': ['o', 'ō', 'ó', 'ǒ', 'ò'],
-    'u': ['u', 'ū', 'ú', 'ǔ', 'ù'],
-    'v': ['ü', 'ǖ', 'ǘ', 'ǚ', 'ǜ'],
+  // 拆分每个音节为单个token
+  const tokens = []
+  for (const syllable of syllables) {
+    const split = splitPinyinSyllable(syllable)
+    tokens.push(...split)
   }
 
-  // 按优先级找元音
-  const priority = 'aeouiv'
-  for (const v of priority) {
-    const idx = final.indexOf(v)
-    if (idx !== -1) {
-      const toned = toneMarks[v][toneNum]
-      return final.slice(0, idx) + toned + final.slice(idx + 1)
-    }
-  }
-
-  return final
+  return tokens.join(' ')
 }
 
-// 检查并验证token是否在有效集合中
-function validateTokens(tokens) {
-  return tokens.filter(t => validTokens.has(t))
+// 加载英文发音词典
+function loadEnPhone(filePath) {
+  const dict = {}
+  const content = fs.readFileSync(filePath, 'utf-8')
+  for (const line of content.split('\n')) {
+    const parts = line.trim().split(/\s+/)
+    if (parts.length >= 2) {
+      dict[parts[0].toUpperCase()] = parts.slice(1).join(' ')
+    }
+  }
+  return dict
 }
 
 // 英文单词转音素
@@ -159,21 +129,6 @@ function englishToPhones(word, enPhoneDict) {
     'Y': 'W AY1', 'Z': 'Z IY1'
   }
   return word.toUpperCase().split('').map(c => letterPhones[c] || c).join(' ')
-}
-
-// 中文转拼音（数字声调格式，然后拆分）
-function chineseToPinyin(text) {
-  const result = pinyin(text, { style: pinyin.STYLE_TONE2, segment: false })
-  const syllables = result.flat()
-
-  // 拆分每个音节为单个token
-  const tokens = []
-  for (const syllable of syllables) {
-    const split = splitPinyinSyllable(syllable)
-    tokens.push(...split)
-  }
-
-  return tokens.join(' ')
 }
 
 // 转换单个关键词

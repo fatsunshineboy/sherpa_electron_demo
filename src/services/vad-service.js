@@ -1,11 +1,12 @@
 // VAD 服务
 const sherpa_onnx = require('sherpa-onnx-node')
 const { state, resetVadState, resetAsrState, resetKwsState } = require('../utils/state-manager')
-const { VAD_CONFIG, KWS_CONFIG, TTS_CONFIG, PATHS } = require('../config/constants')
+const { VAD_CONFIG, TTS_CONFIG } = require('../config/constants')
 const chatService = require('./chat-service')
 const ttsService = require('./tts-service')
 const audioPlayer = require('../audio/audio-player')
 const asrService = require('./asr-service')
+const { createAudioDataCallback, createAudioInput } = require('../audio/audio-utils')
 
 // 静音计时器相关状态
 let silenceTimerRemaining = VAD_CONFIG.SILENCE_TIMEOUT // 剩余时间（毫秒）
@@ -70,7 +71,7 @@ function pauseSilenceTimer(mainWindow) {
 function createVad() {
   const config = {
     sileroVad: {
-      model: './models/vad/silero_vad.onnx',
+      model: VAD_CONFIG.MODEL_PATH,
       threshold: 0.5,
       minSpeechDuration: VAD_CONFIG.MIN_SPEECH_DURATION,
       minSilenceDuration: VAD_CONFIG.MIN_SILENCE_DURATION,
@@ -121,7 +122,7 @@ function startASR(mainWindow) {
 }
 
 // 处理 VAD 音频数据
-function processASRWithVAD(samples, mainWindow, asrService) {
+function processASRWithVAD(samples, mainWindow) {
   const { vad, vadBuffer } = state
   if (!vad || !vadBuffer) return
 
@@ -249,17 +250,12 @@ async function finishASR(mainWindow) {
     }
 
     // 释放 VAD 资源
-    try { state.vad.free() } catch(e) {}
-    state.vad = null
+    resetVadState()
   }
-
-  state.vadBuffer = null
-  state.isSpeechActive = false
-  state.speechStartTime = null
 
   // 重新开始录音（包括重建 KWS 实例和音频输入设备）
   const kwsService = require('./kws-service')
-  kwsService.restartRecording(mainWindow)
+  kwsService.restartRecordingInKWSMode(mainWindow)
 
   console.log('ASR mode exited')
 }
@@ -278,6 +274,11 @@ async function processConversation(mainWindow, userText) {
   try {
     state.isChatProcessing = true
     state.lastUserMessage = userText
+
+    if (!userText) {
+      console.log('No user text to process, skipping conversation flow')
+      return
+    }
 
     // 1. 停止音频输入，跳过所有数据
     state.skipAudioInput = true
@@ -335,14 +336,8 @@ async function processConversation(mainWindow, userText) {
     state.isSpeechActive = false
     state.speechStartTime = null
 
-    // 重新创建 VAD 实例（VAD 内部状态已 stale，必须重新创建）
-    if (state.vad) {
-      try { state.vad.free() } catch(e) {}
-      state.vad = null
-    }
-    if (state.vadBuffer) {
-      state.vadBuffer = null
-    }
+    // 清理并重新创建 VAD 实例
+    resetVadState()
     const vadInstance = createVad()
     state.vad = vadInstance.vad
     state.vadBuffer = vadInstance.buffer
@@ -369,32 +364,7 @@ function restartRecordingInASRMode(mainWindow) {
 
   console.log('restartRecordingInASRMode: stopping and recreating audio devices...')
 
-  // 停止并清理 VAD
-  if (state.vad) {
-    try { state.vad.free() } catch(e) {}
-    state.vad = null
-  }
-  state.vadBuffer = null
-  state.isSpeechActive = false
-  state.speechStartTime = null
-
-  // 停止并清理 KWS
-  if (state.stream) {
-    try { state.stream.free() } catch(e) {}
-    state.stream = null
-  }
-  if (state.kws) {
-    try { state.kws.free() } catch(e) {}
-    state.kws = null
-  }
-
-  // 停止并清理 AudioIO
-  if (state.ai) {
-    try { state.ai.quit() } catch(e) {}
-    state.ai = null
-  }
-
-  // 重置状态
+  // 重置所有状态（包含资源释放）
   resetVadState()
   resetAsrState()
   resetKwsState()
@@ -407,73 +377,17 @@ function restartRecordingInASRMode(mainWindow) {
 
   console.log('restartRecordingInASRMode: creating new AudioIO and VAD...')
 
-  // 重新创建 KWS 实例
-  const kwsService = require('./kws-service')
-  const kwsInstance = kwsService.createKeywordSpotter()
-  const stream = kwsInstance.createStream()
-  state.kws = kwsInstance
-  state.stream = stream
-
   // 重新创建 VAD 实例
   const vadInstance = createVad()
   state.vad = vadInstance.vad
   state.vadBuffer = vadInstance.buffer
 
   // 重新创建 AudioIO
-  const portAudio = require('naudiodon2')
-  const ai = new portAudio.AudioIO({
-    inOptions: {
-      channelCount: 1,
-      closeOnError: true,
-      deviceId: -1,
-      sampleFormat: portAudio.SampleFormatFloat32,
-      sampleRate: KWS_CONFIG.SAMPLE_RATE,
-    },
-  })
-  state.ai = ai
+  state.ai = createAudioInput()
 
-  ai.on('data', data => {
-    if (!state.isRecording) return
-    if (state.skipAudioInput) return
+  state.ai.on('data', createAudioDataCallback(mainWindow))
 
-    const samples = new Float32Array(data.buffer)
-
-    if (state.asrMode) {
-      processASRWithVAD(samples, mainWindow, asrService)
-      return
-    }
-
-    const currentKws = state.kws
-    const currentStream = state.stream
-    if (!currentKws || !currentStream) return
-
-    currentStream.acceptWaveform({
-      sampleRate: KWS_CONFIG.SAMPLE_RATE,
-      samples: samples,
-    })
-
-    while (currentKws.isReady(currentStream)) {
-      currentKws.decode(currentStream)
-    }
-
-    const keyword = currentKws.getResult(currentStream).keyword
-    if (keyword !== '') {
-      if (!state.keywordCounts[keyword]) {
-        state.keywordCounts[keyword] = 0
-      }
-      state.keywordCounts[keyword]++
-
-      mainWindow.webContents.send('keyword-detected', {
-        keyword: keyword,
-        count: state.keywordCounts[keyword],
-        allCounts: state.keywordCounts,
-      })
-
-      vadService.startASR(mainWindow)
-    }
-  })
-
-  ai.start()
+  state.ai.start()
 
   // 启动静音计时器
   startSilenceTimer(mainWindow)

@@ -95,11 +95,20 @@ const state = {
   set lastAIReply(value) { chatState.lastAIReply = value },
 }
 
-// 重置 KWS 状态
+// 重置 KWS 状态（包含资源释放）
 function resetKwsState() {
-  kwsState.kws = null
-  kwsState.stream = null
-  kwsState.ai = null
+  if (kwsState.stream) {
+    try { kwsState.stream.free() } catch(e) {}
+    kwsState.stream = null
+  }
+  if (kwsState.kws) {
+    try { kwsState.kws.free() } catch(e) {}
+    kwsState.kws = null
+  }
+  if (kwsState.ai) {
+    try { kwsState.ai.quit() } catch(e) {}
+    kwsState.ai = null
+  }
   kwsState.keywordCounts = {}
 }
 
@@ -115,7 +124,7 @@ function resetAsrState() {
   asrState.segmentId = 0
 }
 
-// 重置 VAD 状态
+// 重置 VAD 状态（包含资源释放）
 function resetVadState() {
   if (vadState.silenceTimer) {
     clearTimeout(vadState.silenceTimer)
@@ -139,7 +148,7 @@ function resetChatState() {
   // 注意：不清空 conversationHistory，保留上下文
 }
 
-// 重置所有状态（停止录音时使用）
+// 重置所有状态（停止录音时使用，包含资源释放）
 function resetAllState() {
   recordingState.isRecording = false
   asrState.asrMode = false

@@ -124,7 +124,6 @@ window.electronAPI.onStateChanged((data) => {
 
 // ASR 流式状态
 let asrContent = ''
-let currentSegmentId = null
 let segmentResults = {}
 
 // 处理关键词检测事件
@@ -155,7 +154,6 @@ window.electronAPI.onASRStarted((data) => {
   asrBox.classList.add('active')
   asrBox.classList.remove('processing')
   asrContent = ''
-  currentSegmentId = null
   segmentResults = {}
   asrText.textContent = ''
   asrStatus.textContent = `已唤醒，请说话...`
@@ -170,18 +168,6 @@ window.electronAPI.onASRProcessing(() => {
 
 // 处理 ASR 流式数据事件
 window.electronAPI.onASRStream((data) => {
-  if (data.segmentId !== currentSegmentId) {
-    if (currentSegmentId !== null && segmentResults[currentSegmentId]) {
-      asrContent = ''
-      for (let i = 1; i < data.segmentId; i++) {
-        if (segmentResults[i]) {
-          asrContent += segmentResults[i]
-        }
-      }
-    }
-    currentSegmentId = data.segmentId
-  }
-
   segmentResults[data.segmentId] = data.text
 
   let fullText = ''
@@ -199,7 +185,6 @@ window.electronAPI.onASRStream((data) => {
 // 处理 ASR 清空事件
 window.electronAPI.onASRClear && window.electronAPI.onASRClear(() => {
   asrContent = ''
-  currentSegmentId = null
   segmentResults = {}
   asrText.textContent = ''
 })
@@ -231,7 +216,6 @@ window.electronAPI.onASRStopped && window.electronAPI.onASRStopped(() => {
   asrBox.classList.remove('active', 'processing')
   asrStatus.textContent = '识别已停止'
   asrContent = ''
-  currentSegmentId = null
   segmentResults = {}
   clearSilenceTimerDisplay()
 })
@@ -241,7 +225,6 @@ window.electronAPI.onASRDone(() => {
   asrBox.classList.remove('active', 'processing')
   asrStatus.textContent = '识别结束，返回唤醒模式'
   asrContent = ''
-  currentSegmentId = null
   segmentResults = {}
   clearSilenceTimerDisplay()
 })
@@ -279,7 +262,6 @@ window.electronAPI.onASRError((data) => {
   asrText.textContent = '识别失败'
   asrStatus.textContent = `错误：${data.error}`
   asrContent = ''
-  currentSegmentId = null
   segmentResults = {}
 })
 

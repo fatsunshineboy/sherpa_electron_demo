@@ -93,28 +93,17 @@ async function processSpeechSegment(mainWindow, samples, isForced) {
       await callASRAPIStreaming(wavBuffer, mainWindow, currentSegmentId)
 
       // ASR 完成后，判断是否触发 Chat
-      if (!isForced) {
-        const recognizedText = state.asrResult.trim()
-        if (recognizedText) {
-          if (state.isChatProcessing) {
-            console.log('Chat is processing, queuing new speech segment:', recognizedText)
-            state.pendingUserText = recognizedText
-            mainWindow.webContents.send('chat-queued', { text: recognizedText })
-          } else {
-            console.log('Speech segment completed normally, triggering Chat')
-            const vadService = require('./vad-service')
-            vadService.handleConversation(mainWindow, recognizedText)
-          }
-          state.asrResult = ''
-          clearASRResult()
-        }
-      } else {
-        console.log('Speech segment was forced (truncated), waiting for more speech')
-      }
+      const recognizedText = state.asrResult.trim()
+      handleChatTrigger(mainWindow, recognizedText, isForced)
     }
   } catch (err) {
     console.error('ASR error:', err)
     mainWindow.webContents.send('asr-error', { error: err.message })
+  } finally {
+    // 确保在错误情况下也清理 segmentResults（特别是 isForced 时）
+    if (isForced) {
+      clearASRResult()
+    }
   }
 }
 
@@ -141,7 +130,6 @@ async function processSpeechSegmentLocal(mainWindow, samples, segmentId, isForce
 
   if (!text || text.trim() === '') {
     console.log('Local ASR: no text recognized')
-    return
   }
 
   console.log('Local ASR result:', text)
@@ -157,25 +145,30 @@ async function processSpeechSegmentLocal(mainWindow, samples, segmentId, isForce
   })
 
   // 处理后续逻辑
-  if (!isForced) {
-    if (text.trim()) {
-      if (state.isChatProcessing) {
-        console.log('Chat is processing, queuing new speech segment:', text)
-        state.pendingUserText = text
-        mainWindow.webContents.send('chat-queued', { text: text })
-      } else {
-        console.log('Speech segment completed normally, triggering Chat')
-        const vadService = require('./vad-service')
-        vadService.handleConversation(mainWindow, text)
-      }
-      state.asrResult = ''
-      clearASRResult()
-    }
-  } else {
-    console.log('Speech segment was forced (truncated), waiting for more speech')
-  }
+  handleChatTrigger(mainWindow, text, isForced)
 
   return text
+}
+
+// 处理 Chat 触发逻辑（ASR 识别成功后调用）
+function handleChatTrigger(mainWindow, text, isForced) {
+  if (isForced) {
+    console.log('Speech segment was forced (truncated), waiting for more speech')
+    return
+  }
+
+  if (state.isChatProcessing) {
+    console.log('Chat is processing, queuing new speech segment:', text)
+    state.pendingUserText = text
+    mainWindow.webContents.send('chat-queued', { text: text })
+  } else {
+    console.log('Speech segment completed normally, triggering Chat')
+    const vadService = require('./vad-service')
+    vadService.handleConversation(mainWindow, text)
+  }
+
+  state.asrResult = ''
+  clearASRResult()
 }
 
 // 流式调用 ASR API（保持不变）
@@ -281,4 +274,5 @@ module.exports = {
   toggleMode,
   cleanup,
   initLocalRecognizer,
+  handleChatTrigger,
 }

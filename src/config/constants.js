@@ -1,24 +1,3 @@
-// 常量配置
-const path = require('path')
-
-// 文件路径
-const PATHS = {
-  RAW_KEYWORDS: './models/kws/keywords_raw.txt',
-  KEYWORDS: './models/kws/keywords.txt',
-  EN_PHONE: './models/kws/en.phone',
-}
-
-// VAD 配置参数
-const VAD_CONFIG = {
-  MIN_SPEECH_DURATION: 0.25,    // 最小语音持续时间 250ms
-  MIN_SILENCE_DURATION: 2,    // 静音超过 2s 认为一句话结束
-  MAX_SPEECH_DURATION: 25,      // 最大语音持续时间 25 秒
-  WINDOW_SIZE: 512,             // VAD 窗口大小
-  SAMPLE_RATE: 16000,
-  BUFFER_SIZE_SECONDS: 60,      // 缓冲区大小（秒）
-  SILENCE_TIMEOUT: 10000,        // 静音超时时间，超时无新语音则退出 ASR，退回到 kws 模式
-}
-
 // KWS 配置
 const KWS_CONFIG = {
   SAMPLE_RATE: 16000,
@@ -26,6 +5,25 @@ const KWS_CONFIG = {
   NUM_THREADS: 2,
   PROVIDER: 'cpu',
   DEBUG: 1,
+  ENCODER: './models/kws/encoder.onnx',
+  DECODER: './models/kws/decoder.onnx',
+  JOINER: './models/kws/joiner.onnx',
+  TOKENS: './models/kws/tokens.txt',
+  RAW_KEYWORDS: './models/kws/keywords_raw.txt',
+  KEYWORDS: './models/kws/keywords.txt',
+  EN_PHONE: './models/kws/en.phone',
+}
+
+// VAD 配置参数
+const VAD_CONFIG = {
+  MODEL_PATH: './models/vad/silero_vad.onnx',
+  MIN_SPEECH_DURATION: 0.25,    // 最小语音持续时间 250ms
+  MIN_SILENCE_DURATION: 2,    // 静音超过 2s 认为一句话结束
+  MAX_SPEECH_DURATION: 25,      // 最大语音持续时间 25 秒
+  WINDOW_SIZE: 512,             // VAD 窗口大小
+  SAMPLE_RATE: 16000,
+  BUFFER_SIZE_SECONDS: 60,      // 缓冲区大小（秒）
+  SILENCE_TIMEOUT: 10000,        // 静音超时时间，超时无新语音则退出 ASR，退回到 kws 模式
 }
 
 // ASR API 配置
@@ -56,6 +54,12 @@ const TTS_CONFIG = {
 
 // 本地 TTS 配置（sherpa-onnx）
 const LOCAL_TTS_CONFIG = {
+  ACOUSTICMODEL: './models/tts/model-steps-3.onnx',
+  VOCODER: './models/tts/vocos-16khz-univ.onnx',
+  LEXICON: './models/tts/lexicon.txt',
+  TOKENS: './models/tts/tokens.txt',
+  DATADIR: './models/tts/espeak-ng-data',
+  RULEFSTS:'./models/tts/phone-zh.fst,./models/tts/date-zh.fst,./models/tts/number-zh.fst',
   SAMPLE_RATE: 16000,  // vocoder-16khz 输出采样率
 }
 
@@ -63,7 +67,6 @@ const LOCAL_TTS_CONFIG = {
 const LOCAL_ASR_CONFIG = {
   SAMPLE_RATE: 16000,
   FEATURE_DIM: 80,
-  // 模型路径
   CONV_FRONTEND: './models/qwenAsr/conv_frontend.onnx',
   ENCODER: './models/qwenAsr/encoder.onnx',
   DECODER: './models/qwenAsr/decoder.onnx',
@@ -71,7 +74,6 @@ const LOCAL_ASR_CONFIG = {
 }
 
 module.exports = {
-  PATHS,
   VAD_CONFIG,
   KWS_CONFIG,
   ASR_CONFIG,

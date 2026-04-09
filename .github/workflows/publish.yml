@@ -1,17 +1,13 @@
-name: Build and Release
-
+name: Build and Auto Release
 on:
   push:
-    branches:
-      - '*'
+    branches: [ main ]  # 你想触发的分支
 
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -24,15 +20,24 @@ jobs:
       - name: Rebuild native modules
         run: npx electron-rebuild -f -w sherpa-onnx-node
 
-      - name: Build Electron app
-        run: npm run build -- --publish never  # <-- 关键修复
+      - name: Build app
+        run: npm run build -- --publish never
         env:
-          ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+          ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
-      - name: Upload EXE to Release
+      # 👇 自动生成时间戳 tag（避免重复，不需要你手动打 tag）
+      - name: Generate tag
+        id: tag
+        run: echo "tag=auto-build-$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # 👇 自动发布到 GitHub Releases
+      - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.tag.outputs.tag }}
           files: dist/*.exe
+          overwrite: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

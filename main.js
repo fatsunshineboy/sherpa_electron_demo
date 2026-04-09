@@ -4,9 +4,13 @@ const windowManager = require('./src/core/window-manager')
 const { registerIPCHandlers } = require('./src/core/ipc-handlers')
 const kwsService = require('./src/services/kws-service')
 const asrService = require('./src/services/asr-service')
+const pathUtils = require('./src/utils/path-utils')
 
 // 应用就绪
 app.whenReady().then(() => {
+  // 初始化路径工具（必须在最前面，确保其他模块能获取正确路径）
+  pathUtils.initAppRoot()
+
   const mainWindow = windowManager.createWindow()
 
   // 注册 IPC 处理器

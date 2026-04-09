@@ -1,13 +1,16 @@
 // VAD 服务
 const sherpa_onnx = require('sherpa-onnx-node')
-const { state, resetVadState, resetAsrState, resetKwsState } = require('../utils/state-manager')
-const { VAD_CONFIG, TTS_CONFIG } = require('../config/constants')
+const { state, resetVadState, resetAllState } = require('../utils/state-manager')
+const { getConfig } = require('../config/constants')
 const chatService = require('./chat-service')
 const ttsService = require('./tts-service')
 const audioPlayer = require('../audio/audio-player')
 const asrService = require('./asr-service')
 const { createAudioDataCallback, createAudioInput } = require('../audio/audio-utils')
 const silenceTimer = require('./silence-timer')
+
+// 获取配置（包含绝对路径）
+const { VAD_CONFIG, TTS_CONFIG } = getConfig()
 
 // 创建 VAD 实例
 function createVad() {

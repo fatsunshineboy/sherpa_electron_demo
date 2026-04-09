@@ -1,7 +1,10 @@
 // 静音计时器模块
 // 管理 ASR 模式下的静音超时和倒计时显示
 
-const { VAD_CONFIG } = require('../config/constants')
+const { getConfig } = require('../config/constants')
+
+// 获取配置
+const { VAD_CONFIG } = getConfig()
 
 // ========== 内部状态 ==========
 let silenceTimerRemaining = VAD_CONFIG.SILENCE_TIMEOUT

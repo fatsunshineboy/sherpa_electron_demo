@@ -1,7 +1,10 @@
 // TTS 服务 - 文本转语音
 const fetch = require('node-fetch')
-const { TTS_CONFIG,LOCAL_TTS_CONFIG } = require('../config/constants')
+const { getConfig } = require('../config/constants')
 const sherpa_onnx = require('sherpa-onnx-node')
+
+// 获取配置（包含绝对路径）
+const { TTS_CONFIG, LOCAL_TTS_CONFIG } = getConfig()
 
 // TTS 模式：'local' 或 'api'
 let ttsMode = 'local'

@@ -2,10 +2,13 @@
 const FormData = require('form-data')
 const fetch = require('node-fetch')
 const sherpa_onnx = require('sherpa-onnx-node')
-const { ASR_CONFIG, LOCAL_ASR_CONFIG } = require('../config/constants')
+const { getConfig } = require('../config/constants')
 const { state } = require('../utils/state-manager')
 const { createWavBuffer } = require('../audio/audio-utils')
 const windowManager = require('../core/window-manager')
+
+// 获取配置（包含绝对路径）
+const { ASR_CONFIG, LOCAL_ASR_CONFIG } = getConfig()
 
 // 存储每个 segment 的识别结果
 const segmentResults = {}

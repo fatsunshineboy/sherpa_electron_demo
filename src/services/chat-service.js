@@ -1,6 +1,9 @@
 // Chat 服务 - 大模型对话
 const fetch = require('node-fetch')
-const { CHAT_CONFIG } = require('../config/constants')
+const { getConfig } = require('../config/constants')
+
+// 获取配置
+const { CHAT_CONFIG } = getConfig()
 
 /**
  * 调用大模型进行对话

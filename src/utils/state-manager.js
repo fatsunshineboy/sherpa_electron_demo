@@ -42,20 +42,18 @@ const state = {
   // 录音状态
   get isRecording() { return audioState.isRecording },
   set isRecording(value) { audioState.isRecording = value },
+  get ai() { return audioState.ai },
+  set ai(value) { audioState.ai = value },
+  get skipAudioInput() { return audioState.skipAudioInput },
+  set skipAudioInput(value) { audioState.skipAudioInput = value },
 
   // KWS 状态
   get kws() { return kwsState.kws },
   set kws(value) { kwsState.kws = value },
   get stream() { return kwsState.stream },
   set stream(value) { kwsState.stream = value },
-  get ai() { return audioState.ai },
-  set ai(value) { audioState.ai = value },
   get keywordCounts() { return kwsState.keywordCounts },
   set keywordCounts(value) { kwsState.keywordCounts = value },
-
-  // 录音控制
-  get skipAudioInput() { return audioState.skipAudioInput },
-  set skipAudioInput(value) { audioState.skipAudioInput = value },
 
   // ASR 状态
   get asrMode() { return asrState.asrMode },

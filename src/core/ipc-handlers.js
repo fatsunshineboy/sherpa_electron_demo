@@ -5,7 +5,10 @@ const kwsService = require('../services/kws-service')
 const vadService = require('../services/vad-service')
 const ttsService = require('../services/tts-service')
 const windowManager = require('./window-manager')
-const { KWS_CONFIG } = require('../config/constants')
+const { getConfig } = require('../config/constants')
+
+// 获取配置（包含绝对路径）
+const { KWS_CONFIG } = getConfig()
 
 const {
   generateKeywords,

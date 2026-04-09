@@ -1,10 +1,13 @@
 // KWS（关键词唤醒）服务
 const sherpa_onnx = require('sherpa-onnx-node')
-const { KWS_CONFIG } = require('../config/constants')
+const { getConfig } = require('../config/constants')
 const { state, resetAllState } = require('../utils/state-manager')
 const vadService = require('./vad-service')
 const asrService = require('./asr-service')
 const { createAudioDataCallback, createAudioInput } = require('../audio/audio-utils')
+
+// 获取配置（包含绝对路径）
+const { KWS_CONFIG } = getConfig()
 
 // 创建关键词检测器
 function createKeywordSpotter() {

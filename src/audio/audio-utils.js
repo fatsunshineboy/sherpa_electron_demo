@@ -1,5 +1,8 @@
-const { KWS_CONFIG } = require('../config/constants')
+const { getConfig } = require('../config/constants')
 const { state } = require('../utils/state-manager')
+
+// 获取配置
+const { KWS_CONFIG } = getConfig()
 
 const portAudio = require('naudiodon2')
 

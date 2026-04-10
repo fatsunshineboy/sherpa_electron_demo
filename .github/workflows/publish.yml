@@ -1,19 +1,15 @@
-# 工作流名称
 name: Build and Release
 
 on:
   push:
-    # 当推送以 v 开头的标签（如 v1.0.0）时触发构建
-    tags:
-      - 'v*'
+    branches:
+      - main
 
-# 显式声明权限，确保 GitHub Action 有权写入 Release 内容
 permissions:
   contents: write
 
 jobs:
   build:
-    # 使用 Windows 环境进行打包
     runs-on: windows-latest
 
     steps:
@@ -23,36 +19,30 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: 'npm'     # 开启 npm 缓存加速构建
+          node-version: 20
 
       - name: Install dependencies
-        # 安装项目依赖
         run: npm install
 
       - name: Rebuild native modules
-        # 自动重构所有原生模块。
         run: npx electron-rebuild
 
       - name: Build Electron app
-        # 执行 package.json 中的 build 脚本 (electron-builder)
         run: npm run build
         env:
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
-          # 为 electron-builder 提供必要的 Token
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload EXE to Release
-        # 使用 softprops/action-gh-release 自动创建发布并上传产物
         uses: softprops/action-gh-release@v2
         with:
-          # 指定上传 dist 目录下的 exe 文件以及自动更新所需的 yml 配置文件
+          tag_name: latest
           files: |
             dist/*.exe
             dist/*.yml
             dist/*.blockmap
-          # 自动根据 Commit 信息生成发布日志
           generate_release_notes: true
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

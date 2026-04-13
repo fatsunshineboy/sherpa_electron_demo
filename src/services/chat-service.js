@@ -1,4 +1,9 @@
-// Chat 服务 - 大模型对话
+/**
+ * @file chat-service.js
+ * @description Chat 服务 - 大模型对话服务，负责与 LLM API 进行通信
+ * @module services/chat-service
+ */
+
 const fetch = require('node-fetch')
 const { getConfig } = require('../config/constants')
 

@@ -1,3 +1,9 @@
+/**
+ * @file audio-utils.js
+ * @description 音频工具模块 - 提供音频数据转换、合并和音频输入创建等功能
+ * @module audio/audio-utils
+ */
+
 const { getConfig } = require('../config/constants')
 const { state } = require('../utils/state-manager')
 
@@ -6,7 +12,13 @@ const { KWS_CONFIG } = getConfig()
 
 const portAudio = require('naudiodon2')
 
-// 将 Float32 音频数据转换为 WAV 格式 Buffer
+/**
+ * 将 Float32 音频数据转换为 WAV 格式 Buffer
+ * @function createWavBuffer
+ * @param {Float32Array} float32Data - Float32 格式的音频样本数据
+ * @param {number} [sampleRate=16000] - 采样率（Hz）
+ * @returns {Buffer} WAV 格式的音频 Buffer
+ */
 function createWavBuffer(float32Data, sampleRate = 16000) {
   // 转换为 16-bit PCM
   const pcmData = new Int16Array(float32Data.length)
@@ -40,7 +52,12 @@ function createWavBuffer(float32Data, sampleRate = 16000) {
   return wavBuffer
 }
 
-// 合并多个语音段
+/**
+ * 合并多个语音段为一个完整的 Float32Array
+ * @function mergeSpeechSegments
+ * @param {Array} segments - 语音段数组，每个段包含 samples 属性
+ * @returns {Float32Array|null} 合并后的音频样本数据，输入为空时返回 null
+ */
 function mergeSpeechSegments(segments) {
   if (!segments || segments.length === 0) return null
 
@@ -56,6 +73,8 @@ function mergeSpeechSegments(segments) {
 
 /**
  * 创建 KWS/VAD 音频处理的音频数据回调
+ * 动态导入，避免产生循环依赖
+ * @function createAudioDataCallback
  * @param {BrowserWindow} mainWindow - Electron 窗口
  * @returns {Function} 音频数据回调函数
  */
@@ -104,6 +123,7 @@ function createAudioDataCallback(mainWindow) {
 
 /**
  * 创建 AudioIO 输入实例
+ * @function createAudioInput
  * @param {Object} options - 可选的覆盖选项
  * @returns {Object} AudioIO 实例
  */

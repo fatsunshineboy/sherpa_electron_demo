@@ -1,3 +1,9 @@
+/**
+ * @file constants.js
+ * @description 配置常量模块 - 定义各服务的配置参数，支持动态路径解析
+ * @module config/constants
+ */
+
 // 路径工具 - 动态获取资源路径
 const pathUtils = require('../utils/path-utils')
 

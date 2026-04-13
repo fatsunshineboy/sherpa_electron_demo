@@ -1,4 +1,9 @@
-// 音频播放服务
+/**
+ * @file audio-player.js
+ * @description 音频播放服务 - 使用 Speaker 播放 PCM 音频数据
+ * @module audio/audio-player
+ */
+
 const Speaker = require('speaker')
 
 // 播放状态

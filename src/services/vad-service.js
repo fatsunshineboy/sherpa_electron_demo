@@ -1,4 +1,9 @@
-// VAD 服务
+/**
+ * @file vad-service.js
+ * @description VAD（Voice Activity Detection）服务 - 语音活动检测与 ASR 流程管理
+ * @module services/vad-service
+ */
+
 const sherpa_onnx = require('sherpa-onnx-node')
 const { state, resetVadState, resetAllState } = require('../utils/state-manager')
 const { getConfig } = require('../config/constants')
@@ -12,7 +17,11 @@ const silenceTimer = require('./silence-timer')
 // 获取配置（包含绝对路径）
 const { VAD_CONFIG, TTS_CONFIG } = getConfig()
 
-// 创建 VAD 实例
+/**
+ * 创建 VAD 实例和循环缓冲区
+ * @function createVad
+ * @returns {{vad: Object, buffer: Object, config: Object}} VAD 实例、循环缓冲区和配置对象
+ */
 function createVad() {
   const config = {
     sileroVad: {
@@ -38,7 +47,11 @@ function createVad() {
   return { vad: vadInstance, buffer: circularBuffer, config }
 }
 
-// 初始化 ASR 模式（切换到 VAD 检测）
+/**
+ * 初始化 ASR 模式并启动 VAD 检测
+ * @function startASR
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ */
 function startASR(mainWindow) {
   state.asrMode = true
   state.asrResult = ''
@@ -66,7 +79,12 @@ function startASR(mainWindow) {
   })
 }
 
-// 处理 VAD 音频数据
+/**
+ * 处理 VAD 音频数据 - 检测语音活动并处理语音段
+ * @function processASRWithVAD
+ * @param {Float32Array} samples - 音频样本数据
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ */
 function processASRWithVAD(samples, mainWindow) {
   const { vad, vadBuffer } = state
   if (!vad || !vadBuffer) return
@@ -154,7 +172,12 @@ function processASRWithVAD(samples, mainWindow) {
   }
 }
 
-// 完成 ASR，退出 ASR 模式（静音超时时调用）
+/**
+ * 完成 ASR 并退出 ASR 模式（静音超时时调用）
+ * @function finishASR
+ * @async
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ */
 async function finishASR(mainWindow) {
   if (!state.asrMode) return
 
@@ -191,7 +214,12 @@ async function finishASR(mainWindow) {
   console.log('ASR mode exited')
 }
 
-// 处理对话流程（由 asr-service 调用，异步执行，不阻塞 ASR）
+/**
+ * 处理对话流程（由 asr-service 调用，异步执行，不阻塞 ASR）
+ * @function handleConversation
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ * @param {string} userText - 用户输入的文本
+ */
 function handleConversation(mainWindow, userText) {
   // 异步执行，不阻塞 ASR 继续监听
   processConversation(mainWindow, userText).catch(error => {
@@ -200,7 +228,13 @@ function handleConversation(mainWindow, userText) {
   })
 }
 
-// 处理对话流程：Chat -> TTS -> 播放 -> 继续 VAD 模式等待用户输入
+/**
+ * 处理完整对话流程：Chat -> TTS -> 播放 -> 继续 VAD 模式等待用户输入
+ * @async
+ * @function processConversation
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ * @param {string} userText - 用户输入的文本
+ */
 async function processConversation(mainWindow, userText) {
   try {
     state.isChatProcessing = true
@@ -286,7 +320,11 @@ async function processConversation(mainWindow, userText) {
   }
 }
 
-// 在 ASR 模式下重新开始录音（Chat+TTS 完成后调用）
+/**
+ * 在 ASR 模式下重新开始录音（Chat+TTS 完成后调用）
+ * @function restartRecordingInASRMode
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ */
 function restartRecordingInASRMode(mainWindow) {
   // 保存 ASR 相关状态
   const savedAsrMode = state.asrMode
@@ -324,7 +362,13 @@ function restartRecordingInASRMode(mainWindow) {
   console.log('restartRecordingInASRMode: completed, ASR mode active')
 }
 
-// 播放指定文本的 TTS（用于播放按钮）
+/**
+ * 播放指定文本的 TTS 音频（用于播放按钮）
+ * @async
+ * @function playTTS
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ * @param {string} text - 要播放的文本内容
+ */
 async function playTTS(mainWindow, text) {
   try {
     mainWindow.webContents.send('tts-play-started')

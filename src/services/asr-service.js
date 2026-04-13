@@ -1,4 +1,9 @@
-// ASR 服务
+/**
+ * @file asr-service.js
+ * @description ASR（Automatic Speech Recognition）服务 - 语音识别服务，支持本地和 API 两种模式
+ * @module services/asr-service
+ */
+
 const FormData = require('form-data')
 const fetch = require('node-fetch')
 const sherpa_onnx = require('sherpa-onnx-node')
@@ -21,25 +26,41 @@ let asrMode = 'local'  // 默认使用本地模式
 // 本地 ASR 识别器实例（单例）
 let localRecognizer = null
 
-// 获取当前模式
+/**
+ * 获取当前 ASR 模式
+ * @function getMode
+ * @returns {string} 当前模式 ('local' 或 'api')
+ */
 function getMode() {
   return asrMode
 }
 
-// 切换模式
+/**
+ * 切换 ASR 模式
+ * @function toggleMode
+ * @returns {string} 切换后的新模式
+ */
 function toggleMode() {
   asrMode = asrMode === 'api' ? 'local' : 'api'
   return asrMode
 }
 
-// 设置模式
+/**
+ * 设置 ASR 模式
+ * @function setMode
+ * @param {string} mode - 要设置的模式 ('local' 或 'api')
+ * @returns {string} 设置后的模式
+ */
 function setMode(mode) {
   asrMode = mode
   return asrMode
 }
 
-// ========== 本地 ASR 初始化 ==========
-
+/**
+ * 初始化本地 ASR 识别器（sherpa-onnx OfflineRecognizer）
+ * @function initLocalRecognizer
+ * @returns {Object} 本地识别器实例
+ */
 function initLocalRecognizer() {
   if (localRecognizer) return localRecognizer
 
@@ -67,9 +88,14 @@ function initLocalRecognizer() {
   return localRecognizer
 }
 
-// ========== 语音处理主逻辑 ==========
-
-// 处理语音段并发送给 API 或本地模型
+/**
+ * 处理语音段并发送给 ASR 识别（本地或 API 模式）
+ * @async
+ * @function processSpeechSegment
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ * @param {Float32Array} samples - 音频样本数据
+ * @param {boolean} isForced - 是否为强制截断（true 表示超时截断，不触发 Chat）
+ */
 async function processSpeechSegment(mainWindow, samples, isForced) {
   console.log("ASR processSpeechSegment called, mode:", asrMode, ", isForced:", isForced)
 
@@ -110,7 +136,16 @@ async function processSpeechSegment(mainWindow, samples, isForced) {
   }
 }
 
-// 本地 ASR 处理（sherpa-onnx OfflineRecognizer）
+/**
+ * 本地 ASR 处理（使用 sherpa-onnx OfflineRecognizer 识别）
+ * @async
+ * @function processSpeechSegmentLocal
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ * @param {Float32Array} samples - 音频样本数据
+ * @param {number} segmentId - 语音段 ID
+ * @param {boolean} isForced - 是否为强制截断
+ * @returns {string} 识别结果文本
+ */
 async function processSpeechSegmentLocal(mainWindow, samples, segmentId, isForced) {
   const recognizer = initLocalRecognizer()
   const stream = recognizer.createStream()
@@ -153,7 +188,13 @@ async function processSpeechSegmentLocal(mainWindow, samples, segmentId, isForce
   return text
 }
 
-// 处理 Chat 触发逻辑（ASR 识别成功后调用）
+/**
+ * 处理 Chat 触发逻辑（ASR 识别成功后调用）
+ * @function handleChatTrigger
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ * @param {string} text - 识别的文本内容
+ * @param {boolean} isForced - 是否为强制截断
+ */
 function handleChatTrigger(mainWindow, text, isForced) {
   if (isForced) {
     console.log('Speech segment was forced (truncated), waiting for more speech')
@@ -174,7 +215,16 @@ function handleChatTrigger(mainWindow, text, isForced) {
   clearASRResult()
 }
 
-// 流式调用 ASR API（保持不变）
+/**
+ * 流式调用 ASR API 进行语音识别
+ * @async
+ * @function callASRAPIStreaming
+ * @param {Buffer} audioData - WAV 格式的音频数据
+ * @param {BrowserWindow} mainWindow - Electron 主窗口实例
+ * @param {number} segmentId - 语音段 ID
+ * @param {boolean} [isFinal=false] - 是否为最终结果
+ * @returns {Promise<void>}
+ */
 async function callASRAPIStreaming(audioData, mainWindow, segmentId, isFinal = false) {
   const formData = new FormData()
   formData.append('model', ASR_CONFIG.MODEL)
@@ -243,7 +293,10 @@ async function callASRAPIStreaming(audioData, mainWindow, segmentId, isFinal = f
   })
 }
 
-// 更新完整的 ASR 识别结果
+/**
+ * 更新完整的 ASR 识别结果（合并所有 segment）
+ * @function updateASRResult
+ */
 function updateASRResult() {
   let fullText = ''
   const sortedIds = Object.keys(segmentResults).sort((a, b) => a - b)
@@ -253,14 +306,20 @@ function updateASRResult() {
   state.asrResult = fullText
 }
 
-// 清空识别结果
+/**
+ * 清空所有识别结果
+ * @function clearASRResult
+ */
 function clearASRResult() {
   Object.keys(segmentResults).forEach(key => delete segmentResults[key])
 }
 
 // ========== 资源清理 ==========
 
-// 清理本地模型实例（在应用退出时调用）
+/**
+ * 清理本地模型实例（在应用退出时调用）
+ * @function cleanup
+ */
 function cleanup() {
   if (localRecognizer) {
     try { localRecognizer.free() } catch(e) {}

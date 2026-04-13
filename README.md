@@ -200,6 +200,24 @@ models/
 npm start
 ```
 
+> 运行报错：A JavaScript error occurred in the main process
+> Uncaught Exception:Error: The module 'W\?\path_to_node modules\.st.. \segfault-handler.nodewas compiled against a different Node.js version usingNODE MODULE VERSION 127. This version of Node.js requiresNODE MODULE VERSION 145. Please try re-compiling or re-installingthe module (for instance, using 'npm rebuild' or 'npm install').at process.func [as dlopen] (node:electron/js2c/node_init:2:2617)at Module. extensions..node (node:internal/modules/cjs/loader:1980:18)at Object.func [as .node] (node:electron/js2c/node_init:2:2617)at Module.load (node:internal/modules/cjs/loader:1540:32)at Module. _load (node:internal/modules/cjs/loader:1342:12)at c. load (node:electron/js2c/node init:2:18047)at wrapModuleload (node:internal/modules/cjs/loader:262:19)at Module.require (node:internal/modules/cjs/loader:1563:12)at require (node:internal/modules/helpers:152:16) at bindings.
+>
+> 原因：
+>
+>  **Electron 内置 Node.js 版本** 和 **本地编译原生模块（segfault-handler）的 Node 版本不一致**，导致 `.node` 二进制模块无法加载。
+>
+> 方案：
+>
+> ```bash
+> # 安装修复工具
+> npm install --save-dev electron-rebuild
+> 
+> # 执行修复（自动适配 Electron 版本编译所有原生模块）
+> npx electron-rebuild
+> ```
+>
+
 ---
 
 ## 使用说明

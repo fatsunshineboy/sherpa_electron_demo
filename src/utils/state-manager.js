@@ -1,3 +1,9 @@
+/**
+ * @file state-manager.js
+ * @description 状态管理模块 - 管理应用的全局状态（音频、KWS、ASR、VAD、对话等）
+ * @module utils/state-manager
+ */
+
 // 音频状态
 const audioState = {
   ai: null,

@@ -1,5 +1,8 @@
-// 静音计时器模块
-// 管理 ASR 模式下的静音超时和倒计时显示
+/**
+ * @file silence-timer.js
+ * @description 静音计时器模块 - 管理 ASR 模式下的静音超时和倒计时显示
+ * @module services/silence-timer
+ */
 
 const { getConfig } = require('../config/constants')
 

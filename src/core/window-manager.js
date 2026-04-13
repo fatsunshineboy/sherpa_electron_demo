@@ -1,11 +1,23 @@
-// 窗口管理
+/**
+ * @file window-manager.js
+ * @description Electron 窗口管理模块 - 负责创建和管理应用主窗口
+ */
+
 const { BrowserWindow } = require('electron/main')
 const path = require('node:path')
 
+/**
+ * 窗口管理器对象
+ * @namespace windowManager
+ */
 const windowManager = {
+  /** @type {BrowserWindow|null} 主窗口实例 */
   mainWindow: null,
 
-  // 创建主窗口
+  /**
+   * 创建并初始化主窗口
+   * @returns {BrowserWindow} 创建的窗口实例
+   */
   createWindow() {
     const win = new BrowserWindow({
       width: 900,
@@ -33,12 +45,19 @@ const windowManager = {
     return win
   },
 
-  // 获取主窗口
+  /**
+   * 获取主窗口实例
+   * @returns {BrowserWindow|null} 主窗口实例，未创建时返回 null
+   */
   getMainWindow() {
     return this.mainWindow
   },
 
-  // 向所有窗口发送消息
+  /**
+   * 向所有打开的窗口发送 IPC 消息
+   * @param {string} channel - IPC 通道名称
+   * @param {...any} args - 要传递的参数
+   */
   broadcast(channel, ...args) {
     BrowserWindow.getAllWindows().forEach(win => {
       win.webContents.send(channel, ...args)

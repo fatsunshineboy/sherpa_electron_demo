@@ -1,4 +1,9 @@
-// TTS 服务 - 文本转语音
+/**
+ * @file tts-service.js
+ * @description TTS（Text-To-Speech）服务 - 文本转语音服务，支持本地和 API 两种模式
+ * @module services/tts-service
+ */
+
 const fetch = require('node-fetch')
 const { getConfig } = require('../config/constants')
 const sherpa_onnx = require('sherpa-onnx-node')
@@ -12,7 +17,11 @@ let ttsMode = 'local'
 // 本地 TTS 实例
 let localTts = null
 
-// 初始化本地 TTS
+/**
+ * 初始化本地 TTS 引擎（sherpa-onnx OfflineTts）
+ * @function initLocalTts
+ * @returns {Object} 本地 TTS 实例
+ */
 function initLocalTts() {
   if (localTts) return localTts
 
@@ -37,18 +46,31 @@ function initLocalTts() {
   return localTts
 }
 
-// 获取当前模式
+/**
+ * 获取当前 TTS 模式
+ * @function getMode
+ * @returns {string} 当前模式 ('local' 或 'api')
+ */
 function getMode() {
   return ttsMode
 }
 
-// 切换模式
+/**
+ * 切换 TTS 模式
+ * @function toggleMode
+ * @returns {string} 切换后的新模式
+ */
 function toggleMode() {
   ttsMode = ttsMode === 'local' ? 'api' : 'local'
   return ttsMode
 }
 
-// 设置模式
+/**
+ * 设置 TTS 模式
+ * @function setMode
+ * @param {string} mode - 要设置的模式 ('local' 或 'api')
+ * @returns {string} 设置后的模式
+ */
 function setMode(mode) {
   ttsMode = mode
   return ttsMode
@@ -70,7 +92,15 @@ async function synthesize(text, options = {}) {
   }
 }
 
-// 本地 TTS 合成
+/**
+ * 本地 TTS 合成 - 使用 sherpa-onnx 将文本转换为语音
+ * @async
+ * @function synthesizeLocal
+ * @param {string} text - 要转换的文本
+ * @param {Object} options - 可选参数
+ * @param {number} options.speed - 语速 [0.5, 2.0]
+ * @returns {Promise<Buffer>} - PCM 音频数据 Buffer（Int16 格式）
+ */
 async function synthesizeLocal(text, options = {}) {
   const speed = options.speed || 1.0
 
@@ -91,7 +121,16 @@ async function synthesizeLocal(text, options = {}) {
   return resultBuffer
 }
 
-// API TTS 合成
+/**
+ * API TTS 合成 - 调用远程 API 将文本转换为语音
+ * @async
+ * @function synthesizeApi
+ * @param {string} text - 要转换的文本
+ * @param {Object} options - 可选参数
+ * @param {string} options.voice - 音色
+ * @param {number} options.speed - 语速
+ * @returns {Promise<Buffer>} - PCM 音频数据 Buffer
+ */
 async function synthesizeApi(text, options = {}) {
   const voice = options.voice || TTS_CONFIG.VOICE
   const speed = options.speed || TTS_CONFIG.SPEED

@@ -437,6 +437,11 @@ LOCAL_TTS_CONFIG = {
 - **KWS Docs**: https://k2-fsa.github.io/sherpa/onnx/kws/index.html
 - **VAD Docs**: https://k2-fsa.github.io/sherpa/onnx/vad/index.html
 - **Pre-trained Models**: https://github.com/k2-fsa/sherpa-onnx/releases
+- **kws model**:https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20.tar.bz2
+- **vad model**:https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx
+- **asr model**:https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-qwen3-asr-0.6B-int8-2026-03-25.tar.bz2
+- **acoustic model**:https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/matcha-icefall-zh-en.tar.bz2
+- **vocoder model**:https://github.com/k2-fsa/sherpa-onnx/releases/download/vocoder-models/vocos-16khz-univ.onnx
 
 ### Electron
 - **Documentation**: https://www.electronjs.org/docs
